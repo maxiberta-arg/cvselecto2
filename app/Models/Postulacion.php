@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Postulacion extends Model
 {
+    // Especificar el nombre correcto de la tabla
+    protected $table = 'postulaciones';
+
     // Relación muchos a uno con BusquedaLaboral
     public function busquedaLaboral()
     {

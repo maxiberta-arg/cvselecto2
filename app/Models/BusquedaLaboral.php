@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 class BusquedaLaboral extends Model
 {
+    // Especificar el nombre correcto de la tabla
+    protected $table = 'busquedas_laborales';
+
     // Relación muchos a uno con Empresa
     public function empresa()
     {

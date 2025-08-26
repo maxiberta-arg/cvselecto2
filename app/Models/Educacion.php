@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Educacion extends Model
 {
+    // Especificar el nombre correcto de la tabla
+    protected $table = 'educaciones';
+
     // Relación muchos a uno con Candidato
     public function candidato()
     {
