@@ -3,7 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreCandidatoRequest;
+use App\Http\Requests\UpdateCandidatoRequest;
 
 class CandidatoController extends Controller
 {
@@ -25,16 +26,12 @@ class CandidatoController extends Controller
     /**
      * Crear un nuevo candidato.
      */
-    public function store(Request $request)
+    public function store(StoreCandidatoRequest $request)
     {
         // Validación básica (reemplazar por FormRequest en el siguiente paso)
-        $request->validate([
-            'user_id' => 'required|exists:users,id|unique:candidatos,user_id',
-            'apellido' => 'required|string',
-        ]);
-
-        $candidato = \App\Models\Candidato::create($request->all());
-        return response()->json($candidato, 201);
+    // Validación centralizada con FormRequest
+    $candidato = \App\Models\Candidato::create($request->validated());
+    return response()->json($candidato, 201);
     }
 
     /**
@@ -55,11 +52,11 @@ class CandidatoController extends Controller
     /**
      * Actualizar un candidato existente.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateCandidatoRequest $request, string $id)
     {
-        $candidato = \App\Models\Candidato::findOrFail($id);
-        $candidato->update($request->all());
-        return response()->json($candidato);
+    $candidato = \App\Models\Candidato::findOrFail($id);
+    $candidato->update($request->validated());
+    return response()->json($candidato);
     }
 
     /**
