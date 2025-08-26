@@ -17,8 +17,10 @@ export default function Navbar() {
     ? 'linear-gradient(90deg, #8e24aa 60%, #ede7f6 100%)'
     : isAuthenticated && user?.rol === 'empresa'
     ? 'linear-gradient(90deg, #fffde7 60%, #fbc02d 100%)'
+    : isAuthenticated && user?.rol === 'candidato'
+    ? 'linear-gradient(90deg, #e3f2fd 60%, #1976d2 100%)'
     : 'linear-gradient(90deg, #fffde7 60%, #ede7f6 100%)';
-  const navBorder = isAuthenticated && user?.rol === 'admin' ? '#8e24aa' : '#fbc02d';
+  const navBorder = isAuthenticated && user?.rol === 'admin' ? '#8e24aa' : isAuthenticated && user?.rol === 'empresa' ? '#fbc02d' : isAuthenticated && user?.rol === 'candidato' ? '#1976d2' : '#fbc02d';
 
   // Secciones con iconos y color activo para admin
   const adminSections = [
@@ -35,6 +37,13 @@ export default function Navbar() {
     { to: '/busquedas', label: 'Búsquedas', icon: 'bi bi-clipboard-plus' },
     { to: '/candidatos', label: 'Candidatos', icon: 'bi bi-people-fill' },
     { to: '/entrevistas', label: 'Entrevistas', icon: 'bi bi-calendar-check' },
+  ];
+  // Secciones con iconos y color activo para candidato
+  const candidatoSections = [
+    { to: '/candidato', label: 'Dashboard', icon: 'bi bi-person-badge' },
+    { to: '/perfil', label: 'Mi Perfil', icon: 'bi bi-person-circle' },
+    { to: '/ofertas', label: 'Ofertas', icon: 'bi bi-briefcase' },
+    { to: '/postulaciones', label: 'Postulaciones', icon: 'bi bi-send-check' },
   ];
 
   return (
@@ -54,10 +63,14 @@ export default function Navbar() {
             )}
             {isAuthenticated && user?.rol === 'candidato' && (
               <>
-                <li className="nav-item"><Link className="nav-link" to="/candidato">Dashboard</Link></li>
-                <li className="nav-item"><Link className="nav-link" to="/perfil">Mi Perfil</Link></li>
-                <li className="nav-item"><Link className="nav-link" to="/ofertas">Ofertas</Link></li>
-                <li className="nav-item"><Link className="nav-link" to="/postulaciones">Postulaciones</Link></li>
+                {candidatoSections.map(({ to, label, icon }) => (
+                  <li className="nav-item" key={to}>
+                    <Link className="nav-link d-flex align-items-center" to={to} style={{ color: '#1976d2', fontWeight: 500, fontSize: '1.05rem', background: 'transparent', borderRadius: 8, padding: '2px 10px' }}>
+                      <i className={`${icon} me-1`} style={{ fontSize: '1.2rem', color: '#1976d2' }}></i>
+                      {label}
+                    </Link>
+                  </li>
+                ))}
               </>
             )}
             {isAuthenticated && user?.rol === 'empresa' && (
@@ -91,7 +104,7 @@ export default function Navbar() {
                 <span className="me-2">{getAvatar()}</span>
                 <span className="fw-semibold" style={{ fontSize: '1rem', color: isAuthenticated && user?.rol === 'admin' ? '#fff' : '#333', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.nombre || user?.email || user?.correo}</span>
               </div>
-              <button className="btn px-3 py-1 fw-bold" style={{ borderRadius: 12, boxShadow: isAuthenticated && user?.rol === 'admin' ? '0 2px 8px #8e24aa22' : '0 2px 8px #fbc02d22', fontSize: '1rem', background: isAuthenticated && user?.rol === 'admin' ? '#fff' : '#fbc02d', color: isAuthenticated && user?.rol === 'admin' ? '#8e24aa' : '#fff', border: 'none' }} onClick={logout}>
+              <button className="btn px-3 py-1 fw-bold" style={{ borderRadius: 12, boxShadow: isAuthenticated && user?.rol === 'admin' ? '0 2px 8px #8e24aa22' : isAuthenticated && user?.rol === 'empresa' ? '0 2px 8px #fbc02d22' : '0 2px 8px #1976d222', fontSize: '1rem', background: isAuthenticated && user?.rol === 'admin' ? '#fff' : isAuthenticated && user?.rol === 'empresa' ? '#fbc02d' : '#1976d2', color: isAuthenticated && user?.rol === 'admin' ? '#8e24aa' : '#fff', border: 'none', transition: 'background 0.2s, color 0.2s' }} onClick={logout}>
                 <i className="bi bi-box-arrow-right me-1"></i> Salir
               </button>
             </div>

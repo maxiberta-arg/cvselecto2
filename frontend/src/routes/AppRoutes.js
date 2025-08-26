@@ -14,7 +14,8 @@ export default function AppRoutes() {
   return (
     <AuthProvider>
       <Router>
-        <Navbar />
+        {/* Mostrar Navbar solo si no estamos en Home */}
+        {window.location.pathname !== '/' && <Navbar />}
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
