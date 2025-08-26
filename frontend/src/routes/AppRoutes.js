@@ -6,6 +6,7 @@ import EmpresaDashboard from '../views/EmpresaDashboard';
 import AdminDashboard from '../views/AdminDashboard';
 import PerfilCandidato from '../views/PerfilCandidato';
 import PerfilEmpresa from '../views/PerfilEmpresa';
+import PerfilAdmin from '../views/PerfilAdmin';
 import Login from '../views/Login';
 import Navbar from '../components/Navbar';
 import ProtectedRoute from './ProtectedRoute';
@@ -36,6 +37,11 @@ export default function AppRoutes() {
                 <PerfilEmpresa />
               </ProtectedRoute>
             } />
+              <Route path="/perfil-admin" element={
+                <ProtectedRoute rol="admin">
+                  <PerfilAdmin />
+                </ProtectedRoute>
+              } />
           <Route path="/empresa" element={
             <ProtectedRoute rol="empresa">
               <EmpresaDashboard />

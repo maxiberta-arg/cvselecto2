@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import DashboardCard from '../components/DashboardCard';
 import { useAuth } from '../context/AuthContext';
 
@@ -7,6 +8,7 @@ export default function AdminDashboard() {
   const { user } = useAuth();
   const email = user && (user.email || user.correo || user.nombre) ? (user.email || user.correo || user.nombre) : '';
   const nombre = email ? email.split('@')[0].replace('.', ' ') : 'Admin';
+  const navigate = useNavigate();
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #ede7f6 60%, #fffde7 100%)' }}>
@@ -28,7 +30,15 @@ export default function AdminDashboard() {
           <div className="col-md-8 d-flex align-items-center">
             <div>
               <h2 className="fw-bold mb-1" style={{ color: '#8e24aa' }}>¡Hola, {nombre.charAt(0).toUpperCase() + nombre.slice(1)}! <span role="img" aria-label="admin">🛡️</span></h2>
-              <div className="text-secondary">Panel de control y gestión global de la plataforma</div>
+              <div className="text-secondary mb-3">Panel de control y gestión global de la plataforma</div>
+              <button
+                type="button"
+                className="btn btn-primary px-4 py-2 fw-bold d-flex align-items-center"
+                style={{ borderRadius: 14, fontSize: '1.1rem', boxShadow: '0 2px 8px #8e24aa22', width: 'fit-content' }}
+                onClick={() => navigate('/perfil-admin')}
+              >
+                <i className="bi bi-person-badge me-2" style={{ fontSize: '1.3rem' }}></i> Editar perfil
+              </button>
             </div>
           </div>
         </div>
