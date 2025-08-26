@@ -12,6 +12,16 @@ class PostulacionSeeder extends Seeder
      */
     public function run(): void
     {
-        //
+        // Seeder de postulación vinculando candidato y búsqueda laboral
+        $candidato = \App\Models\Candidato::first();
+        $busqueda = \App\Models\BusquedaLaboral::first();
+        if ($candidato && $busqueda) {
+            \App\Models\Postulacion::create([
+                'busqueda_id' => $busqueda->id,
+                'candidato_id' => $candidato->id,
+                'estado' => 'postulado',
+                'fecha_postulacion' => now(),
+            ]);
+        }
     }
 }
