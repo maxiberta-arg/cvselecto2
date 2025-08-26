@@ -12,7 +12,15 @@ class BusquedaLaboralController extends Controller
      * Display a listing of the resource.
      */
     /**
-     * Listar todas las búsquedas laborales.
+     * @OA\Get(
+     *     path="/api/busquedas-laborales",
+     *     summary="Listar todas las búsquedas laborales",
+     *     tags={"Búsquedas Laborales"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Listado de búsquedas laborales"
+     *     )
+     * )
      */
     public function index()
     {
@@ -23,7 +31,32 @@ class BusquedaLaboralController extends Controller
      * Store a newly created resource in storage.
      */
     /**
-     * Crear una nueva búsqueda laboral.
+     * @OA\Post(
+     *     path="/api/busquedas-laborales",
+     *     summary="Crear una nueva búsqueda laboral",
+     *     tags={"Búsquedas Laborales"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"empresa_id", "titulo", "descripcion"},
+     *             @OA\Property(property="empresa_id", type="integer"),
+     *             @OA\Property(property="titulo", type="string"),
+     *             @OA\Property(property="descripcion", type="string"),
+     *             @OA\Property(property="requisitos", type="string"),
+     *             @OA\Property(property="estado", type="string"),
+     *             @OA\Property(property="fecha_publicacion", type="string", format="date"),
+     *             @OA\Property(property="fecha_cierre", type="string", format="date")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Búsqueda laboral creada"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Error de validación"
+     *     )
+     * )
      */
     public function store(StoreBusquedaLaboralRequest $request)
     {
@@ -35,7 +68,25 @@ class BusquedaLaboralController extends Controller
      * Display the specified resource.
      */
     /**
-     * Mostrar una búsqueda laboral específica.
+     * @OA\Get(
+     *     path="/api/busquedas-laborales/{id}",
+     *     summary="Mostrar una búsqueda laboral específica",
+     *     tags={"Búsquedas Laborales"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Datos de la búsqueda laboral"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Búsqueda laboral no encontrada"
+     *     )
+     * )
      */
     public function show(string $id)
     {
@@ -47,7 +98,36 @@ class BusquedaLaboralController extends Controller
      * Update the specified resource in storage.
      */
     /**
-     * Actualizar una búsqueda laboral existente.
+     * @OA\Put(
+     *     path="/api/busquedas-laborales/{id}",
+     *     summary="Actualizar una búsqueda laboral existente",
+     *     tags={"Búsquedas Laborales"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="titulo", type="string"),
+     *             @OA\Property(property="descripcion", type="string"),
+     *             @OA\Property(property="requisitos", type="string"),
+     *             @OA\Property(property="estado", type="string"),
+     *             @OA\Property(property="fecha_publicacion", type="string", format="date"),
+     *             @OA\Property(property="fecha_cierre", type="string", format="date")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Búsqueda laboral actualizada"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Búsqueda laboral no encontrada"
+     *     )
+     * )
      */
     public function update(UpdateBusquedaLaboralRequest $request, string $id)
     {
@@ -60,7 +140,25 @@ class BusquedaLaboralController extends Controller
      * Remove the specified resource from storage.
      */
     /**
-     * Eliminar una búsqueda laboral.
+     * @OA\Delete(
+     *     path="/api/busquedas-laborales/{id}",
+     *     summary="Eliminar una búsqueda laboral",
+     *     tags={"Búsquedas Laborales"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Búsqueda laboral eliminada"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Búsqueda laboral no encontrada"
+     *     )
+     * )
      */
     public function destroy(string $id)
     {

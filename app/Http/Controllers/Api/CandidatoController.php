@@ -12,7 +12,15 @@ class CandidatoController extends Controller
      * Display a listing of the resource.
      */
     /**
-     * Listar todos los candidatos.
+     * @OA\Get(
+     *     path="/api/candidatos",
+     *     summary="Listar todos los candidatos",
+     *     tags={"Candidatos"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Listado de candidatos"
+     *     )
+     * )
      */
     public function index()
     {
@@ -24,7 +32,31 @@ class CandidatoController extends Controller
      * Store a newly created resource in storage.
      */
     /**
-     * Crear un nuevo candidato.
+     * @OA\Post(
+     *     path="/api/candidatos",
+     *     summary="Crear un nuevo candidato",
+     *     tags={"Candidatos"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"user_id", "apellido"},
+     *             @OA\Property(property="user_id", type="integer"),
+     *             @OA\Property(property="apellido", type="string"),
+     *             @OA\Property(property="fecha_nacimiento", type="string", format="date"),
+     *             @OA\Property(property="telefono", type="string"),
+     *             @OA\Property(property="direccion", type="string"),
+     *             @OA\Property(property="cv_path", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Candidato creado"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Error de validación"
+     *     )
+     * )
      */
     public function store(StoreCandidatoRequest $request)
     {
@@ -38,7 +70,25 @@ class CandidatoController extends Controller
      * Display the specified resource.
      */
     /**
-     * Mostrar un candidato específico.
+     * @OA\Get(
+     *     path="/api/candidatos/{id}",
+     *     summary="Mostrar un candidato específico",
+     *     tags={"Candidatos"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Datos del candidato"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Candidato no encontrado"
+     *     )
+     * )
      */
     public function show(string $id)
     {
@@ -50,7 +100,35 @@ class CandidatoController extends Controller
      * Update the specified resource in storage.
      */
     /**
-     * Actualizar un candidato existente.
+     * @OA\Put(
+     *     path="/api/candidatos/{id}",
+     *     summary="Actualizar un candidato existente",
+     *     tags={"Candidatos"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="apellido", type="string"),
+     *             @OA\Property(property="fecha_nacimiento", type="string", format="date"),
+     *             @OA\Property(property="telefono", type="string"),
+     *             @OA\Property(property="direccion", type="string"),
+     *             @OA\Property(property="cv_path", type="string")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Candidato actualizado"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Candidato no encontrado"
+     *     )
+     * )
      */
     public function update(UpdateCandidatoRequest $request, string $id)
     {
@@ -63,7 +141,25 @@ class CandidatoController extends Controller
      * Remove the specified resource from storage.
      */
     /**
-     * Eliminar un candidato.
+     * @OA\Delete(
+     *     path="/api/candidatos/{id}",
+     *     summary="Eliminar un candidato",
+     *     tags={"Candidatos"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Candidato eliminado"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Candidato no encontrado"
+     *     )
+     * )
      */
     public function destroy(string $id)
     {

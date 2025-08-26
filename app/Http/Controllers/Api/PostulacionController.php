@@ -12,7 +12,15 @@ class PostulacionController extends Controller
      * Display a listing of the resource.
      */
     /**
-     * Listar todas las postulaciones.
+     * @OA\Get(
+     *     path="/api/postulaciones",
+     *     summary="Listar todas las postulaciones",
+     *     tags={"Postulaciones"},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Listado de postulaciones"
+     *     )
+     * )
      */
     public function index()
     {
@@ -23,7 +31,29 @@ class PostulacionController extends Controller
      * Store a newly created resource in storage.
      */
     /**
-     * Crear una nueva postulación.
+     * @OA\Post(
+     *     path="/api/postulaciones",
+     *     summary="Crear una nueva postulación",
+     *     tags={"Postulaciones"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"busqueda_id", "candidato_id"},
+     *             @OA\Property(property="busqueda_id", type="integer"),
+     *             @OA\Property(property="candidato_id", type="integer"),
+     *             @OA\Property(property="estado", type="string"),
+     *             @OA\Property(property="fecha_postulacion", type="string", format="date")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Postulación creada"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Error de validación"
+     *     )
+     * )
      */
     public function store(StorePostulacionRequest $request)
     {
@@ -35,7 +65,25 @@ class PostulacionController extends Controller
      * Display the specified resource.
      */
     /**
-     * Mostrar una postulación específica.
+     * @OA\Get(
+     *     path="/api/postulaciones/{id}",
+     *     summary="Mostrar una postulación específica",
+     *     tags={"Postulaciones"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Datos de la postulación"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Postulación no encontrada"
+     *     )
+     * )
      */
     public function show(string $id)
     {
@@ -47,7 +95,32 @@ class PostulacionController extends Controller
      * Update the specified resource in storage.
      */
     /**
-     * Actualizar una postulación existente.
+     * @OA\Put(
+     *     path="/api/postulaciones/{id}",
+     *     summary="Actualizar una postulación existente",
+     *     tags={"Postulaciones"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="estado", type="string"),
+     *             @OA\Property(property="fecha_postulacion", type="string", format="date")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Postulación actualizada"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Postulación no encontrada"
+     *     )
+     * )
      */
     public function update(UpdatePostulacionRequest $request, string $id)
     {
@@ -60,7 +133,25 @@ class PostulacionController extends Controller
      * Remove the specified resource from storage.
      */
     /**
-     * Eliminar una postulación.
+     * @OA\Delete(
+     *     path="/api/postulaciones/{id}",
+     *     summary="Eliminar una postulación",
+     *     tags={"Postulaciones"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Postulación eliminada"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Postulación no encontrada"
+     *     )
+     * )
      */
     public function destroy(string $id)
     {
