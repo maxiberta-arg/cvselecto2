@@ -4,6 +4,7 @@ import Home from '../views/Home';
 import CandidatoDashboard from '../views/CandidatoDashboard';
 import EmpresaDashboard from '../views/EmpresaDashboard';
 import AdminDashboard from '../views/AdminDashboard';
+import PerfilCandidato from '../views/PerfilCandidato';
 import Login from '../views/Login';
 import Navbar from '../components/Navbar';
 import ProtectedRoute from './ProtectedRoute';
@@ -22,6 +23,11 @@ export default function AppRoutes() {
           <Route path="/candidato" element={
             <ProtectedRoute rol="candidato">
               <CandidatoDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/perfil" element={
+            <ProtectedRoute rol="candidato">
+              <PerfilCandidato />
             </ProtectedRoute>
           } />
           <Route path="/empresa" element={

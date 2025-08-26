@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('telefono')->nullable();
             $table->string('direccion')->nullable();
             $table->string('cv_path')->nullable()->comment('Ruta al archivo PDF del CV');
+            $table->string('avatar')->nullable()->comment('URL de la foto de perfil');
             $table->timestamps();
 
             // Clave foránea

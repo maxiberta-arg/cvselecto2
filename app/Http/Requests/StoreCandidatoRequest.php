@@ -34,6 +34,7 @@ class StoreCandidatoRequest extends FormRequest
             'telefono' => 'nullable|string',
             'direccion' => 'nullable|string',
             'cv_path' => 'nullable|string',
+            'avatar' => 'nullable|string',
         ];
     }
 }

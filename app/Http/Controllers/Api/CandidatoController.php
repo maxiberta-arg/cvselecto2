@@ -60,10 +60,15 @@ class CandidatoController extends Controller
      */
     public function store(StoreCandidatoRequest $request)
     {
-        // Validación básica (reemplazar por FormRequest en el siguiente paso)
-    // Validación centralizada con FormRequest
-    $candidato = \App\Models\Candidato::create($request->validated());
-    return response()->json($candidato, 201);
+        $data = $request->validated();
+        // Procesar imagen si viene en la request
+        if ($request->hasFile('avatar')) {
+            $file = $request->file('avatar');
+            $path = $file->store('avatars', 'public');
+            $data['avatar'] = '/storage/' . $path;
+        }
+        $candidato = \App\Models\Candidato::create($data);
+        return response()->json($candidato, 201);
     }
 
     /**
@@ -132,9 +137,16 @@ class CandidatoController extends Controller
      */
     public function update(UpdateCandidatoRequest $request, string $id)
     {
-    $candidato = \App\Models\Candidato::findOrFail($id);
-    $candidato->update($request->validated());
-    return response()->json($candidato);
+        $candidato = \App\Models\Candidato::findOrFail($id);
+        $data = $request->validated();
+        // Procesar imagen si viene en la request
+        if ($request->hasFile('avatar')) {
+            $file = $request->file('avatar');
+            $path = $file->store('avatars', 'public');
+            $data['avatar'] = '/storage/' . $path;
+        }
+        $candidato->update($data);
+        return response()->json($candidato);
     }
 
     /**
