@@ -10,6 +10,8 @@ export default function PerfilCandidatoMejorado() {
   const [success, setSuccess] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [showPasswordFields, setShowPasswordFields] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [touchedFields, setTouchedFields] = useState({});
 
   const [formData, setFormData] = useState({
     // Datos del usuario (tabla users)
@@ -131,6 +133,146 @@ export default function PerfilCandidatoMejorado() {
       ...prev,
       [name]: value
     }));
+
+    // Marcar campo como tocado
+    setTouchedFields(prev => ({
+      ...prev,
+      [name]: true
+    }));
+
+    // Validar campo en tiempo real
+    validateField(name, value);
+  };
+
+  const validateField = (name, value) => {
+    let error = '';
+    
+    // Lista de campos obligatorios (excluyendo información personal opcional)
+    const requiredFields = ['name', 'email', 'apellido', 'telefono', 'direccion', 'bio', 'habilidades', 'experiencia_resumida', 'educacion_resumida'];
+    
+    switch (name) {
+      case 'name':
+        if (!value?.trim()) {
+          error = 'El nombre es obligatorio';
+        } else if (value.length < 2) {
+          error = 'El nombre debe tener al menos 2 caracteres';
+        }
+        break;
+      
+      case 'email':
+        if (!value?.trim()) {
+          error = 'El email es obligatorio';
+        } else if (!/\S+@\S+\.\S+/.test(value)) {
+          error = 'Ingrese un email válido';
+        }
+        break;
+      
+      case 'apellido':
+        if (!value?.trim()) {
+          error = 'El apellido es obligatorio';
+        } else if (value.length < 2) {
+          error = 'El apellido debe tener al menos 2 caracteres';
+        }
+        break;
+      
+      case 'telefono':
+        if (!value?.trim()) {
+          error = 'El teléfono es obligatorio';
+        } else if (!/^[\d\s\-\+\(\)]+$/.test(value)) {
+          error = 'Ingrese un número de teléfono válido';
+        }
+        break;
+      
+      case 'direccion':
+        if (!value?.trim()) {
+          error = 'La dirección es obligatoria';
+        } else if (value.length < 10) {
+          error = 'Ingrese una dirección completa (mínimo 10 caracteres)';
+        }
+        break;
+      
+      case 'bio':
+        if (!value?.trim()) {
+          error = 'La biografía profesional es obligatoria';
+        } else if (value.length < 50) {
+          error = 'La biografía debe tener al menos 50 caracteres';
+        } else if (value.length > 1000) {
+          error = 'La biografía no puede superar los 1000 caracteres';
+        }
+        break;
+      
+      case 'habilidades':
+        if (!value?.trim()) {
+          error = 'Las habilidades son obligatorias';
+        } else if (value.length < 10) {
+          error = 'Describa al menos 3 habilidades relevantes';
+        }
+        break;
+      
+      case 'experiencia_resumida':
+        if (!value?.trim()) {
+          error = 'La experiencia laboral es obligatoria';
+        } else if (value.length < 20) {
+          error = 'Describa su experiencia laboral (mínimo 20 caracteres)';
+        }
+        break;
+      
+      case 'educacion_resumida':
+        if (!value?.trim()) {
+          error = 'La información educativa es obligatoria';
+        } else if (value.length < 10) {
+          error = 'Describa su formación académica (mínimo 10 caracteres)';
+        }
+        break;
+      
+      case 'password':
+        if (value && value.length < 8) {
+          error = 'La contraseña debe tener al menos 8 caracteres';
+        }
+        break;
+      
+      case 'password_confirmation':
+        if (formData.password && value !== formData.password) {
+          error = 'Las contraseñas no coinciden';
+        }
+        break;
+      
+      case 'linkedin':
+        // LinkedIn es opcional, solo validar si tiene valor
+        if (value && !/^https?:\/\/.+/.test(value)) {
+          error = 'Ingrese una URL válida (debe comenzar con http:// o https://)';
+        }
+        break;
+      
+      default:
+        break;
+    }
+
+    setFieldErrors(prev => ({
+      ...prev,
+      [name]: error
+    }));
+
+    return error === '';
+  };
+
+  // Función para manejar la descarga del CV
+  const handleDownloadCV = (e) => {
+    e.preventDefault();
+    
+    const cvUrl = formData.cv.startsWith('http') ? formData.cv : `http://localhost:8000${formData.cv}`;
+    const fileName = `CV_${formData.name}_${formData.apellido || 'Candidato'}.pdf`;
+    
+    // Crear un enlace temporal para descargar
+    const link = document.createElement('a');
+    link.href = cvUrl;
+    link.download = fileName;
+    link.target = '_blank';
+    
+    // Agregar al DOM, hacer clic y remover
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleFileChange = (e) => {
@@ -138,15 +280,35 @@ export default function PerfilCandidatoMejorado() {
     if (files && files[0]) {
       const file = files[0];
       
+      // Limpiar errores previos
+      setFieldErrors(prev => ({ ...prev, [name]: '' }));
+      setError(null);
+      
       // Validar tamaño de archivo
-      if (name === 'avatar' && file.size > 2048 * 1024) { // 2MB
-        setError('La imagen no puede superar los 2MB');
-        return;
+      if (name === 'avatar') {
+        if (file.size > 2048 * 1024) { // 2MB
+          const errorMsg = 'La imagen no puede superar los 2MB';
+          setFieldErrors(prev => ({ ...prev, [name]: errorMsg }));
+          return;
+        }
+        if (!file.type.startsWith('image/')) {
+          const errorMsg = 'Solo se permiten archivos de imagen (JPG, PNG, GIF)';
+          setFieldErrors(prev => ({ ...prev, [name]: errorMsg }));
+          return;
+        }
       }
       
-      if (name === 'cv' && file.size > 5120 * 1024) { // 5MB
-        setError('El CV no puede superar los 5MB');
-        return;
+      if (name === 'cv') {
+        if (file.size > 5120 * 1024) { // 5MB
+          const errorMsg = 'El CV no puede superar los 5MB';
+          setFieldErrors(prev => ({ ...prev, [name]: errorMsg }));
+          return;
+        }
+        if (file.type !== 'application/pdf') {
+          const errorMsg = 'Solo se permiten archivos PDF para el CV';
+          setFieldErrors(prev => ({ ...prev, [name]: errorMsg }));
+          return;
+        }
       }
       
       setFormData(prev => ({
@@ -162,37 +324,146 @@ export default function PerfilCandidatoMejorado() {
         };
         reader.readAsDataURL(file);
       }
+
+      // Mostrar éxito para archivos válidos
+      setFieldErrors(prev => ({ 
+        ...prev, 
+        [name]: '',
+        [`${name}_success`]: `${name === 'avatar' ? 'Imagen' : 'CV'} cargado correctamente`
+      }));
     }
   };
 
   const validateForm = () => {
     const errors = [];
+    const newFieldErrors = {};
     
-    if (!formData.name?.trim()) {
-      errors.push('El nombre es obligatorio');
+    // Campos obligatorios (excluyendo información personal opcional como LinkedIn)
+    const requiredFields = [
+      { field: 'name', label: 'nombre' },
+      { field: 'email', label: 'email' },
+      { field: 'apellido', label: 'apellido' },
+      { field: 'telefono', label: 'teléfono' },
+      { field: 'direccion', label: 'dirección' },
+      { field: 'bio', label: 'biografía profesional' },
+      { field: 'habilidades', label: 'habilidades' },
+      { field: 'experiencia_resumida', label: 'experiencia laboral' },
+      { field: 'educacion_resumida', label: 'información educativa' }
+    ];
+    
+    // Validar todos los campos obligatorios
+    requiredFields.forEach(({ field, label }) => {
+      if (!formData[field]?.trim()) {
+        errors.push(`El campo ${label} es obligatorio`);
+        newFieldErrors[field] = `El ${label} es obligatorio`;
+      }
+    });
+    
+    // Validaciones específicas para campos obligatorios con reglas adicionales
+    if (formData.name?.trim()) {
+      if (formData.name.length < 2) {
+        errors.push('El nombre debe tener al menos 2 caracteres');
+        newFieldErrors.name = 'Mínimo 2 caracteres';
+      }
     }
     
-    if (!formData.email?.trim()) {
-      errors.push('El email es obligatorio');
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.push('El email no tiene un formato válido');
+    if (formData.email?.trim()) {
+      if (!/\S+@\S+\.\S+/.test(formData.email)) {
+        errors.push('El email no tiene un formato válido');
+        newFieldErrors.email = 'Ingrese un email válido';
+      }
     }
     
-    if (formData.password || formData.password_confirmation) {
-      if (formData.password.length < 8) {
+    if (formData.apellido?.trim()) {
+      if (formData.apellido.length < 2) {
+        errors.push('El apellido debe tener al menos 2 caracteres');
+        newFieldErrors.apellido = 'Mínimo 2 caracteres';
+      }
+    }
+    
+    if (formData.telefono?.trim()) {
+      if (!/^[\d\s\-\+\(\)]+$/.test(formData.telefono)) {
+        errors.push('El formato del teléfono no es válido');
+        newFieldErrors.telefono = 'Solo números, espacios, guiones y paréntesis';
+      }
+    }
+    
+    if (formData.direccion?.trim()) {
+      if (formData.direccion.length < 10) {
+        errors.push('La dirección debe ser más específica (mínimo 10 caracteres)');
+        newFieldErrors.direccion = 'Ingrese una dirección completa';
+      }
+    }
+    
+    if (formData.bio?.trim()) {
+      if (formData.bio.length < 50) {
+        errors.push('La biografía debe ser más detallada (mínimo 50 caracteres)');
+        newFieldErrors.bio = 'Mínimo 50 caracteres';
+      } else if (formData.bio.length > 1000) {
+        errors.push('La biografía no puede superar los 1000 caracteres');
+        newFieldErrors.bio = 'Máximo 1000 caracteres';
+      }
+    }
+    
+    if (formData.habilidades?.trim()) {
+      if (formData.habilidades.length < 10) {
+        errors.push('Describa al menos 3 habilidades relevantes');
+        newFieldErrors.habilidades = 'Mínimo 10 caracteres';
+      }
+    }
+    
+    if (formData.experiencia_resumida?.trim()) {
+      if (formData.experiencia_resumida.length < 20) {
+        errors.push('Describa su experiencia laboral con más detalle');
+        newFieldErrors.experiencia_resumida = 'Mínimo 20 caracteres';
+      }
+    }
+    
+    if (formData.educacion_resumida?.trim()) {
+      if (formData.educacion_resumida.length < 10) {
+        errors.push('Describa su formación académica');
+        newFieldErrors.educacion_resumida = 'Mínimo 10 caracteres';
+      }
+    }
+    
+    // Validar contraseñas solo si se están cambiando
+    if (showPasswordFields && (formData.password || formData.password_confirmation)) {
+      if (!formData.password) {
+        errors.push('Ingrese la nueva contraseña');
+        newFieldErrors.password = 'Este campo es obligatorio';
+      } else if (formData.password.length < 8) {
         errors.push('La contraseña debe tener al menos 8 caracteres');
+        newFieldErrors.password = 'Mínimo 8 caracteres';
       }
-      if (formData.password !== formData.password_confirmation) {
+      
+      if (!formData.password_confirmation) {
+        errors.push('Confirme la nueva contraseña');
+        newFieldErrors.password_confirmation = 'Este campo es obligatorio';
+      } else if (formData.password !== formData.password_confirmation) {
         errors.push('Las contraseñas no coinciden');
+        newFieldErrors.password_confirmation = 'Las contraseñas no coinciden';
       }
     }
     
+    // Validar LinkedIn solo si se proporciona (campo opcional)
     if (formData.linkedin && !/^https?:\/\/.+/.test(formData.linkedin)) {
       errors.push('El enlace de LinkedIn debe ser una URL válida');
+      newFieldErrors.linkedin = 'Debe comenzar con http:// o https://';
     }
     
+    setFieldErrors(newFieldErrors);
+    
     if (errors.length > 0) {
-      setError(errors.join('. '));
+      setError(
+        <div>
+          <strong>Por favor, corrija los siguientes errores:</strong>
+          <ul className="mb-0 mt-2">
+            {errors.map((err, index) => (
+              <li key={index}>{err}</li>
+            ))}
+          </ul>
+        </div>
+      );
       return false;
     }
     
@@ -250,9 +521,21 @@ export default function PerfilCandidatoMejorado() {
         });
       }
 
-      setSuccess('Perfil actualizado correctamente');
+      setSuccess(
+        <div>
+          <strong>¡Perfil actualizado exitosamente!</strong>
+          <div className="mt-1 small">
+            {Object.keys(userUpdateData).length > 0 && <div>• Datos de usuario actualizados</div>}
+            {candidatoFormData.entries().next().done === false && <div>• Información profesional actualizada</div>}
+            {formData.avatar instanceof File && <div>• Nueva foto de perfil guardada</div>}
+            {formData.cv instanceof File && <div>• Nuevo CV cargado correctamente</div>}
+          </div>
+        </div>
+      );
       setEditMode(false);
       setShowPasswordFields(false);
+      setFieldErrors({});
+      setTouchedFields({});
       
       // Recargar datos para obtener URLs actualizadas de archivos
       await reloadData();
@@ -284,6 +567,44 @@ export default function PerfilCandidatoMejorado() {
     setShowPasswordFields(false);
     setError(null);
     setSuccess(null);
+    setFieldErrors({});
+    setTouchedFields({});
+  };
+
+  // Función para obtener clases CSS del campo según su estado
+  const getFieldClasses = (fieldName) => {
+    let classes = 'form-control';
+    
+    if (fieldErrors[fieldName] && touchedFields[fieldName]) {
+      classes += ' is-invalid';
+    } else if (touchedFields[fieldName] && !fieldErrors[fieldName] && formData[fieldName]) {
+      classes += ' is-valid';
+    }
+    
+    return classes;
+  };
+
+  // Función para mostrar mensaje de error/éxito de campo
+  const renderFieldFeedback = (fieldName) => {
+    if (fieldErrors[`${fieldName}_success`]) {
+      return (
+        <div className="valid-feedback d-block">
+          <i className="bi bi-check-circle me-1"></i>
+          {fieldErrors[`${fieldName}_success`]}
+        </div>
+      );
+    }
+    
+    if (fieldErrors[fieldName] && touchedFields[fieldName]) {
+      return (
+        <div className="invalid-feedback d-block">
+          <i className="bi bi-exclamation-triangle me-1"></i>
+          {fieldErrors[fieldName]}
+        </div>
+      );
+    }
+    
+    return null;
   };
 
   if (loading) {
@@ -383,24 +704,27 @@ export default function PerfilCandidatoMejorado() {
                       <input 
                         type="text" 
                         name="name"
-                        className="form-control" 
+                        className={getFieldClasses('name')}
                         value={formData.name}
                         onChange={handleInputChange}
                         disabled={!editMode}
                         required
                       />
+                      {renderFieldFeedback('name')}
                     </div>
 
                     <div className="col-md-6">
-                      <label className="form-label fw-semibold">Apellido</label>
+                      <label className="form-label fw-semibold">Apellido *</label>
                       <input 
                         type="text" 
                         name="apellido"
-                        className="form-control" 
+                        className={getFieldClasses('apellido')}
                         value={formData.apellido}
                         onChange={handleInputChange}
                         disabled={!editMode}
+                        required
                       />
+                      {renderFieldFeedback('apellido')}
                     </div>
 
                     <div className="col-md-6">
@@ -408,36 +732,41 @@ export default function PerfilCandidatoMejorado() {
                       <input 
                         type="email" 
                         name="email"
-                        className="form-control" 
+                        className={getFieldClasses('email')}
                         value={formData.email}
                         onChange={handleInputChange}
                         disabled={!editMode}
                         required
                       />
+                      {renderFieldFeedback('email')}
                     </div>
 
                     <div className="col-md-6">
-                      <label className="form-label fw-semibold">Teléfono</label>
+                      <label className="form-label fw-semibold">Teléfono *</label>
                       <input 
                         type="tel" 
                         name="telefono"
-                        className="form-control" 
+                        className={getFieldClasses('telefono')}
                         value={formData.telefono}
                         onChange={handleInputChange}
                         disabled={!editMode}
+                        required
                       />
+                      {renderFieldFeedback('telefono')}
                     </div>
 
                     <div className="col-12">
-                      <label className="form-label fw-semibold">Dirección</label>
+                      <label className="form-label fw-semibold">Dirección *</label>
                       <input 
                         type="text" 
                         name="direccion"
-                        className="form-control" 
+                        className={getFieldClasses('direccion')}
                         value={formData.direccion}
                         onChange={handleInputChange}
                         disabled={!editMode}
+                        required
                       />
+                      {renderFieldFeedback('direccion')}
                     </div>
 
                     {/* Cambio de contraseña */}
@@ -464,23 +793,25 @@ export default function PerfilCandidatoMejorado() {
                               <input 
                                 type="password" 
                                 name="password"
-                                className="form-control" 
+                                className={getFieldClasses('password')}
                                 value={formData.password}
                                 onChange={handleInputChange}
                                 minLength={8}
                                 placeholder="Mínimo 8 caracteres"
                               />
+                              {renderFieldFeedback('password')}
                             </div>
                             <div className="col-md-6">
                               <label className="form-label fw-semibold">Confirmar Contraseña</label>
                               <input 
                                 type="password" 
                                 name="password_confirmation"
-                                className="form-control" 
+                                className={getFieldClasses('password_confirmation')}
                                 value={formData.password_confirmation}
                                 onChange={handleInputChange}
                                 placeholder="Repetir contraseña"
                               />
+                              {renderFieldFeedback('password_confirmation')}
                             </div>
                           </div>
                         )}
@@ -496,59 +827,67 @@ export default function PerfilCandidatoMejorado() {
                     </div>
 
                     <div className="col-12">
-                      <label className="form-label fw-semibold">Biografía Profesional</label>
+                      <label className="form-label fw-semibold">Biografía Profesional *</label>
                       <textarea 
                         name="bio"
-                        className="form-control" 
+                        className={getFieldClasses('bio')}
                         rows={3}
                         value={formData.bio}
                         onChange={handleInputChange}
                         disabled={!editMode}
                         placeholder="Describe tu experiencia, objetivos y habilidades principales..."
                         maxLength={1000}
+                        required
                       />
                       <div className="form-text text-end">
                         {formData.bio.length}/1000 caracteres
                       </div>
+                      {renderFieldFeedback('bio')}
                     </div>
 
                     <div className="col-12">
-                      <label className="form-label fw-semibold">Experiencia Laboral</label>
+                      <label className="form-label fw-semibold">Experiencia Laboral *</label>
                       <textarea 
                         name="experiencia_resumida"
-                        className="form-control" 
+                        className={getFieldClasses('experiencia_resumida')}
                         rows={3}
                         value={formData.experiencia_resumida}
                         onChange={handleInputChange}
                         disabled={!editMode}
                         placeholder="Ejemplo: Software Developer en TechCorp (2020-2023), Frontend Developer en StartupXYZ (2018-2020)..."
+                        required
                       />
+                      {renderFieldFeedback('experiencia_resumida')}
                     </div>
 
                     <div className="col-12">
-                      <label className="form-label fw-semibold">Educación</label>
+                      <label className="form-label fw-semibold">Educación *</label>
                       <textarea 
                         name="educacion_resumida"
-                        className="form-control" 
+                        className={getFieldClasses('educacion_resumida')}
                         rows={2}
                         value={formData.educacion_resumida}
                         onChange={handleInputChange}
                         disabled={!editMode}
                         placeholder="Ejemplo: Licenciatura en Sistemas, Universidad XYZ (2015-2019)..."
+                        required
                       />
+                      {renderFieldFeedback('educacion_resumida')}
                     </div>
 
                     <div className="col-md-8">
-                      <label className="form-label fw-semibold">Habilidades</label>
+                      <label className="form-label fw-semibold">Habilidades *</label>
                       <input 
                         type="text" 
                         name="habilidades"
-                        className="form-control" 
+                        className={getFieldClasses('habilidades')}
                         value={formData.habilidades}
                         onChange={handleInputChange}
                         disabled={!editMode}
                         placeholder="Ejemplo: JavaScript, React, Laravel, MySQL, Git..."
+                        required
                       />
+                      {renderFieldFeedback('habilidades')}
                     </div>
 
                     <div className="col-md-4">
@@ -556,12 +895,13 @@ export default function PerfilCandidatoMejorado() {
                       <input 
                         type="url" 
                         name="linkedin"
-                        className="form-control" 
+                        className={getFieldClasses('linkedin')}
                         value={formData.linkedin}
                         onChange={handleInputChange}
                         disabled={!editMode}
                         placeholder="https://linkedin.com/in/tu-perfil"
                       />
+                      {renderFieldFeedback('linkedin')}
                     </div>
 
                     {/* Archivos */}
@@ -575,29 +915,41 @@ export default function PerfilCandidatoMejorado() {
                     <div className="col-md-6">
                       <label className="form-label fw-semibold">Curriculum Vitae (PDF)</label>
                       {editMode ? (
-                        <input 
-                          type="file" 
-                          name="cv"
-                          className="form-control"
-                          accept=".pdf"
-                          onChange={handleFileChange}
-                        />
+                        <>
+                          <input 
+                            type="file" 
+                            name="cv"
+                            className={getFieldClasses('cv')}
+                            accept=".pdf"
+                            onChange={handleFileChange}
+                          />
+                          {renderFieldFeedback('cv')}
+                        </>
                       ) : (
                         <div className="form-control d-flex align-items-center justify-content-between">
                           {formData.cv ? (
                             <>
                               <span>
                                 <i className="bi bi-file-pdf text-danger me-2"></i>
-                                CV disponible
+                                CV disponible ({formData.cv.includes('.pdf') ? 'PDF' : 'Archivo'})
                               </span>
-                              <a 
-                                href={formData.cv} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="btn btn-sm btn-outline-primary"
-                              >
-                                Ver
-                              </a>
+                              <div className="btn-group">
+                                <a 
+                                  href={formData.cv.startsWith('http') ? formData.cv : `http://localhost:8000${formData.cv}`} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="btn btn-sm btn-outline-primary"
+                                >
+                                  <i className="bi bi-eye me-1"></i>Ver
+                                </a>
+                                <button
+                                  type="button"
+                                  onClick={handleDownloadCV}
+                                  className="btn btn-sm btn-outline-success"
+                                >
+                                  <i className="bi bi-download me-1"></i>Descargar
+                                </button>
+                              </div>
                             </>
                           ) : (
                             <span className="text-muted">No hay CV cargado</span>

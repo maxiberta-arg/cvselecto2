@@ -35,40 +35,42 @@ function AppContent() {
     <Router>
       {/* Mostrar Navbar solo si no estamos en Home o Login */}
       {!['/', '/login'].includes(window.location.pathname) && <Navbar />}
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/candidato" element={
-          <ProtectedRoute rol="candidato">
-            <CandidatoDashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/perfil" element={
-          <ProtectedRoute rol="candidato">
-            <PerfilCandidatoMejorado />
-          </ProtectedRoute>
-        } />
-        <Route path="/perfil-empresa" element={
-          <ProtectedRoute rol="empresa">
-            <PerfilEmpresa />
-          </ProtectedRoute>
-        } />
-        <Route path="/perfil-admin" element={
-          <ProtectedRoute rol="admin">
-            <PerfilAdmin />
-          </ProtectedRoute>
-        } />
-        <Route path="/empresa" element={
-          <ProtectedRoute rol="empresa">
-            <EmpresaDashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/admin" element={
-          <ProtectedRoute rol="admin">
-            <AdminDashboard />
-          </ProtectedRoute>
-        } />
-      </Routes>
+      <div className={['/', '/login'].includes(window.location.pathname) ? 'no-navbar' : ''}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/candidato" element={
+            <ProtectedRoute rol="candidato">
+              <CandidatoDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/perfil" element={
+            <ProtectedRoute rol="candidato">
+              <PerfilCandidatoMejorado />
+            </ProtectedRoute>
+          } />
+          <Route path="/perfil-empresa" element={
+            <ProtectedRoute rol="empresa">
+              <PerfilEmpresa />
+            </ProtectedRoute>
+          } />
+          <Route path="/perfil-admin" element={
+            <ProtectedRoute rol="admin">
+              <PerfilAdmin />
+            </ProtectedRoute>
+          } />
+          <Route path="/empresa" element={
+            <ProtectedRoute rol="empresa">
+              <EmpresaDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin" element={
+            <ProtectedRoute rol="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </div>
     </Router>
   );
 }

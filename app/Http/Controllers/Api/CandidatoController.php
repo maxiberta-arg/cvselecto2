@@ -116,6 +116,15 @@ class CandidatoController extends Controller
             ->where('user_id', $userId)
             ->firstOrFail();
         
+        // Construir URLs completas para archivos si existen
+        if ($candidato->cv_path && !str_starts_with($candidato->cv_path, 'http')) {
+            $candidato->cv_path = url($candidato->cv_path);
+        }
+        
+        if ($candidato->avatar && !str_starts_with($candidato->avatar, 'http')) {
+            $candidato->avatar = url($candidato->avatar);
+        }
+        
         return response()->json($candidato);
     }
 

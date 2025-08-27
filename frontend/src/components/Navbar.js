@@ -47,7 +47,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="navbar navbar-expand-lg shadow-sm" style={{ background: navBg, borderBottom: `2px solid ${navBorder}`, minHeight: 64 }}>
+    <nav className="navbar navbar-expand-lg shadow-sm fixed-top" style={{ background: navBg, borderBottom: `2px solid ${navBorder}`, minHeight: 64, zIndex: 1030 }}>
       <div className="container-fluid">
         <Link className="navbar-brand d-flex align-items-center fw-bold" to="/" style={{ fontSize: '1.5rem', letterSpacing: '1px', color: isAuthenticated && user?.rol === 'admin' ? '#fff' : '#333' }}>
           <i className="bi bi-briefcase-fill me-2" style={{ color: navBorder, fontSize: '1.7rem', filter: 'drop-shadow(0 2px 8px #8e24aa55)' }}></i>
