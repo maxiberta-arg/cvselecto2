@@ -17,6 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('postulacion_id');
             $table->dateTime('fecha');
             $table->enum('modalidad', ['virtual', 'presencial']);
+            $table->enum('resultado', ['aprobado', 'rechazado', 'pendiente'])->default('pendiente');
             $table->text('observaciones')->nullable();
             $table->timestamps();
 

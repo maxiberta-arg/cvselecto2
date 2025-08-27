@@ -12,17 +12,19 @@ class BusquedaLaboralSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seeder de búsqueda laboral vinculada a la empresa ejemplo
-        $empresa = \App\Models\Empresa::where('razon_social', 'Empresa Ejemplo S.A.')->first();
-        if ($empresa) {
+        $faker = \Faker\Factory::create('es_AR');
+        $empresas = \App\Models\Empresa::all();
+        $titulos = ['Desarrollador Backend', 'Desarrollador Frontend', 'QA Tester', 'Analista Funcional', 'Project Manager', 'DevOps', 'Diseñador UX/UI', 'Data Scientist', 'Soporte Técnico', 'Product Owner'];
+        for ($i = 0; $i < 20; $i++) {
+            $empresa = $empresas->random();
             \App\Models\BusquedaLaboral::create([
                 'empresa_id' => $empresa->id,
-                'titulo' => 'Desarrollador Backend',
-                'descripcion' => 'Buscamos desarrollador con experiencia en Laravel.',
-                'requisitos' => 'Laravel, MySQL, Git',
-                'estado' => 'abierta',
-                'fecha_publicacion' => now(),
-                'fecha_cierre' => null,
+                'titulo' => $faker->randomElement($titulos),
+                'descripcion' => $faker->paragraph,
+                'requisitos' => $faker->words(5, true),
+                'estado' => $faker->randomElement(['abierta', 'cerrada']),
+                'fecha_publicacion' => $faker->dateTimeBetween('-1 year', 'now'),
+                'fecha_cierre' => $faker->optional()->dateTimeBetween('now', '+6 months'),
             ]);
         }
     }

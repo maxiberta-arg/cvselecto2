@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CandidatoController;
 use App\Http\Controllers\Api\EmpresaController;
 use App\Http\Controllers\Api\BusquedaLaboralController;
@@ -19,3 +20,6 @@ Route::apiResource('busquedas-laborales', BusquedaLaboralController::class);
 
 // Postulaciones
 Route::apiResource('postulaciones', PostulacionController::class);
+
+// Login
+Route::post('login', [AuthController::class, 'login']);

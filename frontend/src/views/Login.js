@@ -1,39 +1,40 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 // Login con diseño profesional y coherente con la página principal
 export default function Login() {
   // Lista de usuarios demo (uno por rol)
-  const usuariosDemo = [
-    { label: 'Juan Pérez', email: 'juan.perez@email.com', rol: 'candidato', icon: 'bi-person-circle', color: '#1976d2' },
-    { label: 'Empresa Demo', email: 'empresa@email.com', rol: 'empresa', icon: 'bi-building', color: '#fbc02d' },
-    { label: 'Admin Demo', email: 'admin@email.com', rol: 'admin', icon: 'bi-shield-lock', color: '#8e24aa' }
-  ];
   const [usuario, setUsuario] = useState('');
-  const [selectedUser, setSelectedUser] = useState(null);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
   // Detectar el rol según el usuario seleccionado
-  const getRolByEmail = (email) => {
-    const u = usuariosDemo.find(u => u.email === email);
-    return u ? u.rol : 'candidato';
-  };
-
-  const handleSelect = (email) => {
-    setUsuario(email);
-    const userObj = usuariosDemo.find(u => u.email === email);
-    setSelectedUser(userObj || null);
-  };
+  // El rol se obtiene desde la API al autenticar
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const rol = getRolByEmail(usuario);
-    login(usuario, rol);
-    navigate(`/${rol}`);
+    try {
+      // Llamada a la API de login (ajusta endpoint y payload según tu backend)
+      api.post('/login', {
+        email: usuario,
+        password: password
+      }).then(res => {
+        // res.data debe contener todos los datos relevantes del usuario
+        const userData = res.data.user || res.data;
+        // Guardar en el contexto todos los datos (id, nombre, email, rol, etc.)
+        login(userData);
+        // Redireccionar según rol
+        navigate(`/${userData.rol}`);
+      }).catch(() => {
+        alert('Credenciales incorrectas o error de conexión');
+      });
+    } catch {
+      alert('Error de conexión');
+    }
   };
 
   return (
@@ -48,17 +49,13 @@ export default function Login() {
               <div
                 className="rounded-circle d-flex align-items-center justify-content-center w-100 h-100 animate__animated animate__fadeIn"
                 style={{
-                  background: selectedUser
-                    ? `linear-gradient(135deg, ${selectedUser.color} 60%, #ede7f6 100%)`
-                    : 'linear-gradient(135deg, #1976d2 60%, #ede7f6 100%)',
-                  boxShadow: selectedUser
-                    ? `0 0 50px ${selectedUser.color}55, 0 8px 32px 0 rgba(33,150,243,0.13)`
-                    : '0 0 50px #1976d255, 0 8px 32px 0 rgba(33,150,243,0.13)',
+                  background: 'linear-gradient(135deg, #1976d2 60%, #ede7f6 100%)',
+                  boxShadow: '0 0 50px #1976d255, 0 8px 32px 0 rgba(33,150,243,0.13)',
                   border: '4px solid #fff',
                   transition: 'background 0.3s, box-shadow 0.3s',
                 }}>
                 <i
-                  className={`bi ${selectedUser ? selectedUser.icon : 'bi-person-circle'} text-white`}
+                  className="bi bi-person-circle text-white"
                   style={{
                     fontSize: '2.8rem',
                     animation: 'pulse 1.2s infinite',
@@ -71,12 +68,10 @@ export default function Login() {
           </div>
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
-              <select className="form-select form-select-lg" onChange={e => { handleSelect(e.target.value); }} value={usuario} required style={{ borderRadius: '14px', fontWeight: '500', fontSize: '1.08rem', boxShadow: usuario ? '0 2px 8px 0 rgba(33,150,243,0.10)' : 'none', border: usuario ? `2px solid ${selectedUser ? selectedUser.color : '#1976d2'}` : '2px solid #e0e0e0', transition: 'border 0.2s' }}>
-                <option value="">Selecciona usuario para ingresar...</option>
-                {usuariosDemo.map(u => (
-                  <option key={u.email} value={u.email}>{u.label} ({u.email})</option>
-                ))}
-              </select>
+              <div className="input-group input-group-lg">
+                <span className="input-group-text bg-white" style={{ borderRadius: '14px 0 0 14px', fontSize: '1.2rem' }}><i className="bi bi-envelope"></i></span>
+                <input type="email" className="form-control" value={usuario} onChange={e => setUsuario(e.target.value)} placeholder="Email" required style={{ borderRadius: '0 14px 14px 0', fontSize: '1.08rem', boxShadow: '0 1px 4px 0 rgba(33,150,243,0.07)' }} />
+              </div>
             </div>
             <div className="mb-4">
               <div className="input-group input-group-lg">
@@ -87,7 +82,7 @@ export default function Login() {
                 </button>
               </div>
             </div>
-            <button type="submit" className="btn w-100 fw-bold shadow-sm" style={{ fontSize: '1.18rem', background: selectedUser ? `linear-gradient(90deg, ${selectedUser.color} 60%, #512da8 100%)` : 'linear-gradient(90deg, #1976d2 60%, #512da8 100%)', color: '#fff', border: 'none', borderRadius: '14px', boxShadow: '0 2px 16px 0 rgba(33, 150, 243, 0.15)', letterSpacing: '0.5px', transition: 'background 0.2s' }}>
+            <button type="submit" className="btn w-100 fw-bold shadow-sm" style={{ fontSize: '1.18rem', background: 'linear-gradient(90deg, #1976d2 60%, #512da8 100%)', color: '#fff', border: 'none', borderRadius: '14px', boxShadow: '0 2px 16px 0 rgba(33, 150, 243, 0.15)', letterSpacing: '0.5px', transition: 'background 0.2s' }}>
               <i className="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
             </button>
           </form>

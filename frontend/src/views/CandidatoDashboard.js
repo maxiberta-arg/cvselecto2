@@ -7,9 +7,9 @@ import { useAuth } from '../context/AuthContext';
 // Dashboard visual para candidatos, moderno y personalizado
 export default function CandidatoDashboard() {
   const { user } = useAuth();
-  // Extraer nombre del email (antes de @) como ejemplo
-  const email = user && user.nombre ? user.nombre : '';
-  const nombre = email ? email.split('@')[0].replace('.', ' ') : 'Candidato';
+  // Usar las propiedades reales del usuario
+  const nombre = user && user.name ? user.name : 'Candidato';
+  const email = user && user.email ? user.email : '';
 
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #e3f2fd 60%, #ede7f6 100%)' }}>

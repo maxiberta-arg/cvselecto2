@@ -30,6 +30,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('postulacions');
+    // Eliminar primero las tablas hijas
+    Schema::dropIfExists('entrevistas');
+    Schema::dropIfExists('postulaciones');
     }
 };

@@ -8,12 +8,13 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null); // { id, nombre, rol }
+  const [user, setUser] = useState(null); // { id, name, email, rol }
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Simulación de login (reemplazar por llamada a API)
-  const login = (usuario, rol) => {
-    setUser({ nombre: usuario, rol });
+  // Recibe el objeto usuario completo del backend
+  const login = (usuario) => {
+    setUser(usuario);
     setIsAuthenticated(true);
   };
 

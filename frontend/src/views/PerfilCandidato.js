@@ -1,55 +1,117 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
+import { usePerfilEdit } from '../context/PerfilEditContext';
 import { useAuth } from '../context/AuthContext';
 
 // Vista de perfil profesional para candidato con todos los campos relevantes
 export default function PerfilCandidato() {
+  useEffect(() => {
+    console.log('PerfilCandidato montado');
+    return () => {
+      console.log('PerfilCandidato desmontado');
+    };
+  }, []);
+  // Estado editMode global por contexto
+  const { editMode, setEditMode } = usePerfilEdit();
+  useEffect(() => {
+    console.log('editMode:', editMode);
+  }, [editMode]);
   const { user } = useAuth();
-  const [nombre, setNombre] = useState(user?.nombre || '');
-  const [email, setEmail] = useState(user?.email || user?.correo || '');
-  const [telefono, setTelefono] = useState(user?.telefono || '');
-  const [ubicacion, setUbicacion] = useState(user?.ubicacion || '');
-  const [avatar, setAvatar] = useState(null);
-  const [bio, setBio] = useState(user?.bio || '');
-  const [experiencia, setExperiencia] = useState(user?.experiencia || '');
-  const [educacion, setEducacion] = useState(user?.educacion || '');
-  const [habilidades, setHabilidades] = useState(user?.habilidades || '');
-  const [linkedin, setLinkedin] = useState(user?.linkedin || '');
-  const [cv, setCv] = useState(null);
-  const [editMode, setEditMode] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [perfil, setPerfil] = useState({
+    nombre: '',
+    candidatoId: null,
+    email: '',
+    telefono: '',
+    ubicacion: '',
+    avatar: null,
+    bio: '',
+    experiencia: '',
+    educacion: '',
+    habilidades: '',
+    linkedin: '',
+    cv: null
+  });
 
   // Preparar datos para integración con API
+  // Cargar datos reales del candidato al montar el componente
+  useEffect(() => {
+    async function fetchCandidatoByUserId() {
+      try {
+        setLoading(true);
+        const res = await api.get(`/candidatos`);
+        const candidatos = res.data;
+        const candidato = candidatos.find(c => c.user && c.user.id === user.id);
+        if (candidato) {
+          setPerfil({
+            nombre: candidato.user?.name || '',
+            candidatoId: candidato.id,
+            email: candidato.user?.email || '',
+            telefono: candidato.telefono || '',
+            ubicacion: candidato.direccion || '',
+            avatar: candidato.avatar || null,
+            bio: candidato.bio || '',
+            experiencia: candidato.experiencia || '',
+            educacion: candidato.educacion || '',
+            habilidades: candidato.habilidades || '',
+            linkedin: candidato.linkedin || '',
+            cv: candidato.cv_path || null
+          });
+        } else {
+          setError('No se encontró el perfil de candidato para este usuario');
+        }
+        setLoading(false);
+      } catch (err) {
+        setError('Error al cargar datos de perfil');
+        setLoading(false);
+      }
+    }
+    if (user?.id) fetchCandidatoByUserId();
+    // Solo actualizar perfil al montar, no tras editar
+    // Nunca tocar editMode aquí
+  }, []);
+
+  // Guardar cambios en la API
   const handleSave = async (e) => {
-    e.preventDefault();
-    setEditMode(false);
-    // Estructura FormData para enviar datos y archivos
-    const formData = new FormData();
-    formData.append('nombre', nombre);
-    formData.append('email', email);
-    formData.append('telefono', telefono);
-    formData.append('ubicacion', ubicacion);
-    formData.append('bio', bio);
-    formData.append('experiencia', experiencia);
-    formData.append('educacion', educacion);
-    formData.append('habilidades', habilidades);
-    formData.append('linkedin', linkedin);
-    if (avatar instanceof File) formData.append('avatar', avatar);
-    if (cv) formData.append('cv', cv);
-    // Aquí iría la llamada real a la API, por ejemplo:
-    // await axios.post('/api/candidatos/update', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
-    // Por ahora solo simula el guardado visual
+  e.preventDefault();
+  setError(null);
+  setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('nombre', perfil.nombre);
+      formData.append('email', perfil.email);
+      formData.append('telefono', perfil.telefono);
+      formData.append('ubicacion', perfil.ubicacion);
+      formData.append('bio', perfil.bio);
+      formData.append('experiencia', perfil.experiencia);
+      formData.append('educacion', perfil.educacion);
+      formData.append('habilidades', perfil.habilidades);
+      formData.append('linkedin', perfil.linkedin);
+      if (perfil.avatar instanceof File) formData.append('avatar', perfil.avatar);
+      if (perfil.cv && typeof perfil.cv !== 'string') formData.append('cv', perfil.cv);
+      await api.post(`/candidatos/${perfil.candidatoId}?_method=PUT`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+  setLoading(false);
+  setEditMode(false); // Solo salir de edición si el guardado fue exitoso
+    } catch (err) {
+      setError('Error al guardar cambios');
+      setLoading(false);
+    }
   };
 
   // Simulación de cambio de avatar (preparado para integración)
   const handleAvatarChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setAvatar(e.target.files[0]); // Guardar el File para enviar a la API
+      setPerfil(prev => ({ ...prev, avatar: e.target.files[0] }));
     }
   };
   // Simulación de carga de CV
   const handleCvChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setCv(e.target.files[0].name);
+      setPerfil(prev => ({ ...prev, cv: e.target.files[0] }));
     }
   };
 
@@ -60,11 +122,13 @@ export default function PerfilCandidato() {
           <div className="col-md-8">
             <div className="card shadow-lg border-0" style={{ borderRadius: '20px', background: 'linear-gradient(135deg, #e3f2fd 80%, #bbdefb 100%)' }}>
               <div className="card-body p-4">
+                {loading && <div className="text-center text-primary mb-3">Cargando datos...</div>}
+                {error && <div className="alert alert-danger mb-3">{error}</div>}
                 <div className="d-flex flex-column align-items-center mb-4 position-relative">
                   <div className="position-relative mb-2" style={{ width: 120, height: 120 }}>
                     <div className="rounded-circle d-flex align-items-center justify-content-center" style={{ width: 120, height: 120, background: 'linear-gradient(135deg, #1976d2 60%, #e3f2fd 100%)', boxShadow: '0 0 32px #1976d255', border: '4px solid #fff' }}>
-                      {avatar ? (
-                        <img src={avatar instanceof File ? URL.createObjectURL(avatar) : avatar} alt="avatar" style={{ width: 110, height: 110, borderRadius: '50%', objectFit: 'cover', boxShadow: '0 0 12px #1976d288' }} />
+                      {perfil.avatar ? (
+                        <img src={perfil.avatar instanceof File ? URL.createObjectURL(perfil.avatar) : perfil.avatar} alt="avatar" style={{ width: 110, height: 110, borderRadius: '50%', objectFit: 'cover', boxShadow: '0 0 12px #1976d288' }} />
                       ) : (
                         <i className="bi bi-person-circle text-white" style={{ fontSize: '4.5rem' }}></i>
                       )}
@@ -76,52 +140,52 @@ export default function PerfilCandidato() {
                       <i className="bi bi-pencil text-white" style={{ fontSize: '1.2rem' }}></i>
                     </span>
                   </div>
-                  <h3 className="fw-bold mb-1" style={{ color: '#1976d2' }}>{nombre}</h3>
-                  <div className="text-secondary mb-2">{email}</div>
+                  <h3 className="fw-bold mb-1" style={{ color: '#1976d2' }}>{perfil.nombre}</h3>
+                  <div className="text-secondary mb-2">{perfil.email}</div>
                 </div>
                 <form onSubmit={handleSave}>
                   <div className="row g-3">
                     <div className="col-md-6">
                       <label className="form-label fw-semibold">Nombre completo</label>
-                      <input type="text" className="form-control" value={nombre} onChange={e => setNombre(e.target.value)} disabled={!editMode} />
+                      <input type="text" className="form-control" value={perfil.nombre} onChange={e => setPerfil(prev => ({ ...prev, nombre: e.target.value }))} disabled={!editMode} />
                     </div>
                     <div className="col-md-6">
                       <label className="form-label fw-semibold">Correo electrónico</label>
-                      <input type="email" className="form-control" value={email} onChange={e => setEmail(e.target.value)} disabled={!editMode} />
+                      <input type="email" className="form-control" value={perfil.email} onChange={e => setPerfil(prev => ({ ...prev, email: e.target.value }))} disabled={!editMode} />
                     </div>
                     <div className="col-md-6">
                       <label className="form-label fw-semibold">Teléfono</label>
-                      <input type="text" className="form-control" value={telefono} onChange={e => setTelefono(e.target.value)} disabled={!editMode} />
+                      <input type="text" className="form-control" value={perfil.telefono} onChange={e => setPerfil(prev => ({ ...prev, telefono: e.target.value }))} disabled={!editMode} />
                     </div>
                     <div className="col-md-6">
                       <label className="form-label fw-semibold">Ubicación</label>
-                      <input type="text" className="form-control" value={ubicacion} onChange={e => setUbicacion(e.target.value)} disabled={!editMode} />
+                      <input type="text" className="form-control" value={perfil.ubicacion} onChange={e => setPerfil(prev => ({ ...prev, ubicacion: e.target.value }))} disabled={!editMode} />
                     </div>
                     <div className="col-md-12">
                       <label className="form-label fw-semibold">Bio profesional</label>
-                      <textarea className="form-control" rows={2} value={bio} onChange={e => setBio(e.target.value)} disabled={!editMode} placeholder="Describe tu experiencia, habilidades y objetivos..." />
+                      <textarea className="form-control" rows={2} value={perfil.bio} onChange={e => setPerfil(prev => ({ ...prev, bio: e.target.value }))} disabled={!editMode} placeholder="Describe tu experiencia, habilidades y objetivos..." />
                     </div>
                     <div className="col-md-12">
                       <label className="form-label fw-semibold">Experiencia laboral</label>
-                      <textarea className="form-control" rows={2} value={experiencia} onChange={e => setExperiencia(e.target.value)} disabled={!editMode} placeholder="Ejemplo: Empresa, puesto, años..." />
+                      <textarea className="form-control" rows={2} value={perfil.experiencia} onChange={e => setPerfil(prev => ({ ...prev, experiencia: e.target.value }))} disabled={!editMode} placeholder="Ejemplo: Empresa, puesto, años..." />
                     </div>
                     <div className="col-md-12">
                       <label className="form-label fw-semibold">Educación</label>
-                      <textarea className="form-control" rows={2} value={educacion} onChange={e => setEducacion(e.target.value)} disabled={!editMode} placeholder="Ejemplo: Universidad, título, año..." />
+                      <textarea className="form-control" rows={2} value={perfil.educacion} onChange={e => setPerfil(prev => ({ ...prev, educacion: e.target.value }))} disabled={!editMode} placeholder="Ejemplo: Universidad, título, año..." />
                     </div>
                     <div className="col-md-12">
                       <label className="form-label fw-semibold">Habilidades</label>
-                      <input type="text" className="form-control" value={habilidades} onChange={e => setHabilidades(e.target.value)} disabled={!editMode} placeholder="Ejemplo: React, Laravel, Inglés..." />
+                      <input type="text" className="form-control" value={perfil.habilidades} onChange={e => setPerfil(prev => ({ ...prev, habilidades: e.target.value }))} disabled={!editMode} placeholder="Ejemplo: React, Laravel, Inglés..." />
                     </div>
                     <div className="col-md-6">
                       <label className="form-label fw-semibold">LinkedIn</label>
-                      <input type="text" className="form-control" value={linkedin} onChange={e => setLinkedin(e.target.value)} disabled={!editMode} placeholder="URL de perfil LinkedIn" />
+                      <input type="text" className="form-control" value={perfil.linkedin} onChange={e => setPerfil(prev => ({ ...prev, linkedin: e.target.value }))} disabled={!editMode} placeholder="URL de perfil LinkedIn" />
                     </div>
                     <div className="col-md-6">
                       <label className="form-label fw-semibold">CV adjunto</label>
                       <div className="d-flex align-items-center gap-2">
                         <input type="file" accept="application/pdf" onChange={handleCvChange} disabled={!editMode} />
-                        {cv && <span className="badge bg-success">{cv}</span>}
+                        {perfil.cv && <span className="badge bg-success">{typeof perfil.cv === 'string' ? perfil.cv : perfil.cv.name}</span>}
                       </div>
                     </div>
                   </div>

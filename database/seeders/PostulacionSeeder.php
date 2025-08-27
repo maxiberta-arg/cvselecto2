@@ -12,15 +12,17 @@ class PostulacionSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seeder de postulación vinculando candidato y búsqueda laboral
-        $candidato = \App\Models\Candidato::first();
-        $busqueda = \App\Models\BusquedaLaboral::first();
-        if ($candidato && $busqueda) {
+        $faker = \Faker\Factory::create('es_AR');
+        $candidatos = \App\Models\Candidato::all();
+        $busquedas = \App\Models\BusquedaLaboral::all();
+        for ($i = 0; $i < 50; $i++) {
+            $candidato = $candidatos->random();
+            $busqueda = $busquedas->random();
             \App\Models\Postulacion::create([
                 'busqueda_id' => $busqueda->id,
                 'candidato_id' => $candidato->id,
-                'estado' => 'postulado',
-                'fecha_postulacion' => now(),
+                'estado' => $faker->randomElement(['postulado', 'en proceso', 'rechazado', 'seleccionado']),
+                'fecha_postulacion' => $faker->dateTimeBetween('-1 year', 'now'),
             ]);
         }
     }

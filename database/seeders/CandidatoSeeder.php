@@ -12,15 +12,15 @@ class CandidatoSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seeder de candidato vinculado al usuario Juan Candidato
-        $user = \App\Models\User::where('email', 'juan.candidato@cvselecto.com')->first();
-        if ($user) {
+        $faker = \Faker\Factory::create('es_AR');
+        $candidatoUsers = \App\Models\User::orderBy('id', 'desc')->limit(20)->get();
+        foreach ($candidatoUsers as $user) {
             \App\Models\Candidato::create([
                 'user_id' => $user->id,
-                'apellido' => 'Pérez',
-                'fecha_nacimiento' => '1990-05-10',
-                'telefono' => '1122334455',
-                'direccion' => 'Calle Falsa 123',
+                'apellido' => $faker->lastName,
+                'fecha_nacimiento' => $faker->date('Y-m-d', '-18 years'),
+                'telefono' => $faker->phoneNumber,
+                'direccion' => $faker->address,
                 'cv_path' => null,
             ]);
         }
