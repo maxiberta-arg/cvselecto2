@@ -13,6 +13,15 @@ class Educacion extends Model
     // Especificar el nombre correcto de la tabla
     protected $table = 'educaciones';
 
+    protected $fillable = [
+        'candidato_id',
+        'institucion',
+        'titulo',
+        'fecha_inicio',
+        'fecha_fin',
+        'descripcion'
+    ];
+
     // Relación muchos a uno con Candidato
     public function candidato()
     {

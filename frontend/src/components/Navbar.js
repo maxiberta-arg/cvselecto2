@@ -102,9 +102,21 @@ export default function Navbar() {
             <div className="d-flex align-items-center ms-auto">
               <div className="me-3 d-flex align-items-center">
                 <span className="me-2">{getAvatar()}</span>
-                <span className="fw-semibold" style={{ fontSize: '1rem', color: isAuthenticated && user?.rol === 'admin' ? '#fff' : '#333', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.nombre || user?.email || user?.correo}</span>
+                <span className="fw-semibold" style={{ fontSize: '1rem', color: isAuthenticated && user?.rol === 'admin' ? '#fff' : '#333', maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name || user?.email}</span>
               </div>
-              <button className="btn px-3 py-1 fw-bold" style={{ borderRadius: 12, boxShadow: isAuthenticated && user?.rol === 'admin' ? '0 2px 8px #8e24aa22' : isAuthenticated && user?.rol === 'empresa' ? '0 2px 8px #fbc02d22' : '0 2px 8px #1976d222', fontSize: '1rem', background: isAuthenticated && user?.rol === 'admin' ? '#fff' : isAuthenticated && user?.rol === 'empresa' ? '#fbc02d' : '#1976d2', color: isAuthenticated && user?.rol === 'admin' ? '#8e24aa' : '#fff', border: 'none', transition: 'background 0.2s, color 0.2s' }} onClick={logout}>
+              <button 
+                className="btn px-3 py-1 fw-bold" 
+                style={{ 
+                  borderRadius: 12, 
+                  boxShadow: isAuthenticated && user?.rol === 'admin' ? '0 2px 8px #8e24aa22' : isAuthenticated && user?.rol === 'empresa' ? '0 2px 8px #fbc02d22' : '0 2px 8px #1976d222', 
+                  fontSize: '1rem', 
+                  background: isAuthenticated && user?.rol === 'admin' ? '#fff' : isAuthenticated && user?.rol === 'empresa' ? '#fbc02d' : '#1976d2', 
+                  color: isAuthenticated && user?.rol === 'admin' ? '#8e24aa' : '#fff', 
+                  border: 'none', 
+                  transition: 'background 0.2s, color 0.2s' 
+                }} 
+                onClick={() => logout()}
+              >
                 <i className="bi bi-box-arrow-right me-1"></i> Salir
               </button>
             </div>

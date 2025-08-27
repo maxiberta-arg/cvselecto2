@@ -72,6 +72,54 @@ class CandidatoController extends Controller
     }
 
     /**
+     * Get candidato by user_id
+     */
+    /**
+     * @OA\Get(
+     *     path="/api/candidatos/by-user/{userId}",
+     *     summary="Obtener candidato por ID de usuario",
+     *     tags={"Candidatos"},
+     *     @OA\Parameter(
+     *         name="userId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Datos del candidato",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="integer"),
+     *             @OA\Property(property="user_id", type="integer"),
+     *             @OA\Property(property="apellido", type="string"),
+     *             @OA\Property(property="telefono", type="string"),
+     *             @OA\Property(property="direccion", type="string"),
+     *             @OA\Property(property="bio", type="string"),
+     *             @OA\Property(property="habilidades", type="string"),
+     *             @OA\Property(property="linkedin", type="string"),
+     *             @OA\Property(property="user", type="object",
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="name", type="string"),
+     *                 @OA\Property(property="email", type="string")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Candidato no encontrado"
+     *     )
+     * )
+     */
+    public function getByUser($userId)
+    {
+        $candidato = \App\Models\Candidato::with(['user', 'educaciones', 'experiencias', 'postulaciones'])
+            ->where('user_id', $userId)
+            ->firstOrFail();
+        
+        return response()->json($candidato);
+    }
+
+    /**
      * Display the specified resource.
      */
     /**
@@ -139,14 +187,33 @@ class CandidatoController extends Controller
     {
         $candidato = \App\Models\Candidato::findOrFail($id);
         $data = $request->validated();
-        // Procesar imagen si viene en la request
+        
+        // Procesar imagen avatar si viene en la request
         if ($request->hasFile('avatar')) {
+            // Eliminar avatar anterior si existe
+            if ($candidato->avatar) {
+                \Storage::disk('public')->delete(str_replace('/storage/', '', $candidato->avatar));
+            }
             $file = $request->file('avatar');
             $path = $file->store('avatars', 'public');
             $data['avatar'] = '/storage/' . $path;
         }
+        
+        // Procesar CV si viene en la request
+        if ($request->hasFile('cv')) {
+            // Eliminar CV anterior si existe
+            if ($candidato->cv_path) {
+                \Storage::disk('public')->delete(str_replace('/storage/', '', $candidato->cv_path));
+            }
+            $file = $request->file('cv');
+            $path = $file->store('cvs', 'public');
+            $data['cv_path'] = '/storage/' . $path;
+        }
+        
         $candidato->update($data);
-        return response()->json($candidato);
+        
+        // Retornar candidato con relaciones
+        return response()->json($candidato->load('user'));
     }
 
     /**

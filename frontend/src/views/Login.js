@@ -1,40 +1,37 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import api from '../services/api';
 
 // Login con diseño profesional y coherente con la página principal
 export default function Login() {
-  // Lista de usuarios demo (uno por rol)
-  const [usuario, setUsuario] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Detectar el rol según el usuario seleccionado
-  // El rol se obtiene desde la API al autenticar
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+
     try {
-      // Llamada a la API de login (ajusta endpoint y payload según tu backend)
-      api.post('/login', {
-        email: usuario,
-        password: password
-      }).then(res => {
-        // res.data debe contener todos los datos relevantes del usuario
-        const userData = res.data.user || res.data;
-        // Guardar en el contexto todos los datos (id, nombre, email, rol, etc.)
-        login(userData);
-        // Redireccionar según rol
-        navigate(`/${userData.rol}`);
-      }).catch(() => {
-        alert('Credenciales incorrectas o error de conexión');
-      });
-    } catch {
-      alert('Error de conexión');
+      const result = await login({ email, password });
+      
+      if (result.success) {
+        // Redireccionar según rol del usuario
+        const userRole = result.user.rol;
+        navigate(`/${userRole}`);
+      } else {
+        setError(result.error);
+      }
+    } catch (error) {
+      setError('Error de conexión con el servidor');
     }
+    
+    setLoading(false);
   };
 
   return (
@@ -65,25 +62,78 @@ export default function Login() {
               </div>
             </div>
             <h2 className="fw-bold text-primary mb-1" style={{ letterSpacing: '1px', fontFamily: 'inherit' }}>Iniciar Sesión</h2>
+            <div className="text-muted small mb-3">
+              <strong>Usuarios de prueba:</strong><br/>
+              Admin: admin@cvselecto.com / admin123<br/>
+              Candidato: juan.candidato@cvselecto.com / password<br/>
+              Empresa: cualquier email con @empresa / empresa123
+            </div>
           </div>
           <form onSubmit={handleSubmit}>
+            {error && (
+              <div className="alert alert-danger mb-4" style={{ borderRadius: '14px', fontSize: '0.95rem' }}>
+                {error}
+              </div>
+            )}
             <div className="mb-4">
               <div className="input-group input-group-lg">
                 <span className="input-group-text bg-white" style={{ borderRadius: '14px 0 0 14px', fontSize: '1.2rem' }}><i className="bi bi-envelope"></i></span>
-                <input type="email" className="form-control" value={usuario} onChange={e => setUsuario(e.target.value)} placeholder="Email" required style={{ borderRadius: '0 14px 14px 0', fontSize: '1.08rem', boxShadow: '0 1px 4px 0 rgba(33,150,243,0.07)' }} />
+                <input 
+                  type="email" 
+                  className="form-control" 
+                  value={email} 
+                  onChange={e => setEmail(e.target.value)} 
+                  placeholder="Email" 
+                  required 
+                  disabled={loading}
+                  style={{ borderRadius: '0 14px 14px 0', fontSize: '1.08rem', boxShadow: '0 1px 4px 0 rgba(33,150,243,0.07)' }} 
+                />
               </div>
             </div>
             <div className="mb-4">
               <div className="input-group input-group-lg">
                 <span className="input-group-text bg-white" style={{ borderRadius: '14px 0 0 14px', fontSize: '1.2rem' }}><i className="bi bi-lock"></i></span>
-                <input type={showPassword ? 'text' : 'password'} className="form-control" value={password} onChange={e => setPassword(e.target.value)} placeholder="Contraseña" required style={{ borderRadius: '0 14px 14px 0', fontSize: '1.08rem', boxShadow: '0 1px 4px 0 rgba(33,150,243,0.07)' }} />
-                <button type="button" className="btn btn-outline-secondary" tabIndex={-1} onClick={() => setShowPassword(!showPassword)} style={{ borderRadius: '14px' }}>
+                <input 
+                  type={showPassword ? 'text' : 'password'} 
+                  className="form-control" 
+                  value={password} 
+                  onChange={e => setPassword(e.target.value)} 
+                  placeholder="Contraseña" 
+                  required 
+                  disabled={loading}
+                  style={{ borderRadius: '0 14px 14px 0', fontSize: '1.08rem', boxShadow: '0 1px 4px 0 rgba(33,150,243,0.07)' }} 
+                />
+                <button type="button" className="btn btn-outline-secondary" tabIndex={-1} onClick={() => setShowPassword(!showPassword)} disabled={loading} style={{ borderRadius: '14px' }}>
                   <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
                 </button>
               </div>
             </div>
-            <button type="submit" className="btn w-100 fw-bold shadow-sm" style={{ fontSize: '1.18rem', background: 'linear-gradient(90deg, #1976d2 60%, #512da8 100%)', color: '#fff', border: 'none', borderRadius: '14px', boxShadow: '0 2px 16px 0 rgba(33, 150, 243, 0.15)', letterSpacing: '0.5px', transition: 'background 0.2s' }}>
-              <i className="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+            <button 
+              type="submit" 
+              className="btn w-100 fw-bold shadow-sm" 
+              disabled={loading}
+              style={{ 
+                fontSize: '1.18rem', 
+                background: loading ? '#ccc' : 'linear-gradient(90deg, #1976d2 60%, #512da8 100%)', 
+                color: '#fff', 
+                border: 'none', 
+                borderRadius: '14px', 
+                boxShadow: '0 2px 16px 0 rgba(33, 150, 243, 0.15)', 
+                letterSpacing: '0.5px', 
+                transition: 'background 0.2s' 
+              }}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Iniciando sesión...
+                </>
+              ) : (
+                <>
+                  <i className="bi bi-box-arrow-in-right me-2"></i>
+                  Iniciar Sesión
+                </>
+              )}
             </button>
           </form>
         </div>

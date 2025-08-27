@@ -11,7 +11,18 @@ use Illuminate\Database\Eloquent\Model;
 class Candidato extends Model
 {
     protected $fillable = [
-        'user_id', 'apellido', 'fecha_nacimiento', 'telefono', 'direccion', 'cv_path', 'avatar'
+        'user_id',
+        'apellido', 
+        'fecha_nacimiento', 
+        'telefono', 
+        'direccion', 
+        'cv_path', 
+        'avatar',
+        'bio',
+        'habilidades',
+        'linkedin',
+        'experiencia_resumida',
+        'educacion_resumida'
     ];
 
     // Relación uno a uno con User

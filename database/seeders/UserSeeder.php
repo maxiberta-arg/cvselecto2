@@ -20,6 +20,7 @@ class UserSeeder extends Seeder
             'name' => 'Admin Principal',
             'email' => 'admin@cvselecto.com',
             'password' => bcrypt('admin123'),
+            'rol' => 'admin',
         ]);
 
         // 10 empresas
@@ -28,6 +29,7 @@ class UserSeeder extends Seeder
                 'name' => $faker->company,
                 'email' => $faker->unique()->companyEmail,
                 'password' => bcrypt('empresa123'),
+                'rol' => 'empresa',
             ]);
         }
 
@@ -36,12 +38,14 @@ class UserSeeder extends Seeder
             'name' => 'Juan Candidato',
             'email' => 'juan.candidato@cvselecto.com',
             'password' => bcrypt('password'),
+            'rol' => 'candidato',
         ]);
         for ($i = 1; $i <= 19; $i++) {
             \App\Models\User::create([
                 'name' => $faker->name,
                 'email' => $faker->unique()->safeEmail,
                 'password' => bcrypt('password'),
+                'rol' => 'candidato',
             ]);
         }
     }

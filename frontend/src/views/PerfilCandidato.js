@@ -41,63 +41,65 @@ export default function PerfilCandidato() {
     async function fetchCandidatoByUserId() {
       try {
         setLoading(true);
-        const res = await api.get(`/candidatos`);
-        const candidatos = res.data;
-        const candidato = candidatos.find(c => c.user && c.user.id === user.id);
-        if (candidato) {
-          setPerfil({
-            nombre: candidato.user?.name || '',
-            candidatoId: candidato.id,
-            email: candidato.user?.email || '',
-            telefono: candidato.telefono || '',
-            ubicacion: candidato.direccion || '',
-            avatar: candidato.avatar || null,
-            bio: candidato.bio || '',
-            experiencia: candidato.experiencia || '',
-            educacion: candidato.educacion || '',
-            habilidades: candidato.habilidades || '',
-            linkedin: candidato.linkedin || '',
-            cv: candidato.cv_path || null
-          });
-        } else {
-          setError('No se encontró el perfil de candidato para este usuario');
-        }
+        // Usar la nueva API optimizada que busca directamente por user_id
+        const res = await api.get(`/candidatos/by-user/${user.id}`);
+        const candidato = res.data;
+        
+        setPerfil({
+          nombre: candidato.user?.name || '',
+          candidatoId: candidato.id,
+          email: candidato.user?.email || '',
+          telefono: candidato.telefono || '',
+          ubicacion: candidato.direccion || '',
+          avatar: candidato.avatar || null,
+          bio: candidato.bio || '',
+          experiencia: candidato.experiencia_resumida || '',
+          educacion: candidato.educacion_resumida || '',
+          habilidades: candidato.habilidades || '',
+          linkedin: candidato.linkedin || '',
+          cv: candidato.cv_path || null
+        });
         setLoading(false);
       } catch (err) {
-        setError('Error al cargar datos de perfil');
+        if (err.response?.status === 404) {
+          setError('No se encontró el perfil de candidato para este usuario');
+        } else {
+          setError('Error al cargar datos de perfil');
+        }
         setLoading(false);
       }
     }
     if (user?.id) fetchCandidatoByUserId();
-    // Solo actualizar perfil al montar, no tras editar
-    // Nunca tocar editMode aquí
-  }, []);
+  }, [user?.id]);
 
   // Guardar cambios en la API
   const handleSave = async (e) => {
-  e.preventDefault();
-  setError(null);
-  setLoading(true);
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
     try {
       const formData = new FormData();
-      formData.append('nombre', perfil.nombre);
-      formData.append('email', perfil.email);
+      // Mapear campos del frontend a los del backend
       formData.append('telefono', perfil.telefono);
-      formData.append('ubicacion', perfil.ubicacion);
+      formData.append('direccion', perfil.ubicacion);
       formData.append('bio', perfil.bio);
-      formData.append('experiencia', perfil.experiencia);
-      formData.append('educacion', perfil.educacion);
+      formData.append('experiencia_resumida', perfil.experiencia);
+      formData.append('educacion_resumida', perfil.educacion);
       formData.append('habilidades', perfil.habilidades);
       formData.append('linkedin', perfil.linkedin);
+      
       if (perfil.avatar instanceof File) formData.append('avatar', perfil.avatar);
       if (perfil.cv && typeof perfil.cv !== 'string') formData.append('cv', perfil.cv);
+      
       await api.post(`/candidatos/${perfil.candidatoId}?_method=PUT`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-  setLoading(false);
-  setEditMode(false); // Solo salir de edición si el guardado fue exitoso
+      
+      setLoading(false);
+      setEditMode(false); // Solo salir de edición si el guardado fue exitoso
     } catch (err) {
-      setError('Error al guardar cambios');
+      console.error('Error al guardar:', err);
+      setError('Error al guardar cambios: ' + (err.response?.data?.message || err.message));
       setLoading(false);
     }
   };

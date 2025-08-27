@@ -9,17 +9,26 @@ use App\Http\Controllers\Api\PostulacionController;
 
 // Rutas API RESTful para CVSelecto
 
-// Candidatos
-Route::apiResource('candidatos', CandidatoController::class);
-
-// Empresas
-Route::apiResource('empresas', EmpresaController::class);
-
-// Búsquedas laborales
-Route::apiResource('busquedas-laborales', BusquedaLaboralController::class);
-
-// Postulaciones
-Route::apiResource('postulaciones', PostulacionController::class);
-
-// Login
+// Rutas públicas (sin autenticación)
 Route::post('login', [AuthController::class, 'login']);
+
+// Rutas que requieren autenticación
+Route::middleware('auth:sanctum')->group(function () {
+    // Autenticación
+    Route::post('logout', [AuthController::class, 'logout']);
+    Route::get('user', [AuthController::class, 'user']);
+    Route::put('user/profile', [AuthController::class, 'updateProfile']);
+    
+    // Candidatos
+    Route::apiResource('candidatos', CandidatoController::class);
+    Route::get('candidatos/by-user/{userId}', [CandidatoController::class, 'getByUser']);
+    
+    // Empresas
+    Route::apiResource('empresas', EmpresaController::class);
+    
+    // Búsquedas laborales
+    Route::apiResource('busquedas-laborales', BusquedaLaboralController::class);
+    
+    // Postulaciones
+    Route::apiResource('postulaciones', PostulacionController::class);
+});

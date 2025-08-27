@@ -22,11 +22,18 @@ class UpdateCandidatoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'apellido' => 'sometimes|required|string',
+            'apellido' => 'sometimes|required|string|max:255',
             'fecha_nacimiento' => 'nullable|date',
-            'telefono' => 'nullable|string',
-            'direccion' => 'nullable|string',
+            'telefono' => 'nullable|string|max:20',
+            'direccion' => 'nullable|string|max:500',
             'cv_path' => 'nullable|string',
+            'bio' => 'nullable|string|max:1000',
+            'habilidades' => 'nullable|string|max:500',
+            'linkedin' => 'nullable|url|max:255',
+            'experiencia_resumida' => 'nullable|string|max:1000',
+            'educacion_resumida' => 'nullable|string|max:1000',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max
+            'cv' => 'nullable|mimes:pdf|max:5120', // 5MB max para CV
         ];
     }
 }
