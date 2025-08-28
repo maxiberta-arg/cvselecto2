@@ -13,6 +13,23 @@ class BusquedaLaboral extends Model
     // Especificar el nombre correcto de la tabla
     protected $table = 'busquedas_laborales';
 
+    // Campos que pueden ser asignados masivamente
+    protected $fillable = [
+        'empresa_id',
+        'titulo',
+        'descripcion',
+        'requisitos',
+        'estado',
+        'fecha_publicacion',
+        'fecha_cierre'
+    ];
+
+    // Casting de fechas
+    protected $casts = [
+        'fecha_publicacion' => 'date',
+        'fecha_cierre' => 'date',
+    ];
+
     // Relación muchos a uno con Empresa
     public function empresa()
     {

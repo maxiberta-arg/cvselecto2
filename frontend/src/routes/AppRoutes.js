@@ -7,6 +7,8 @@ import AdminDashboard from '../views/AdminDashboard';
 import PerfilCandidatoMejorado from '../views/PerfilCandidatoMejorado';
 import PerfilEmpresa from '../views/PerfilEmpresa';
 import PerfilAdmin from '../views/PerfilAdmin';
+import CrearBusquedaLaboral from '../views/CrearBusquedaLaboral';
+import ListaBusquedas from '../views/ListaBusquedas';
 import Login from '../views/Login';
 import Navbar from '../components/Navbar';
 import ProtectedRoute from './ProtectedRoute';
@@ -62,6 +64,16 @@ function AppContent() {
           <Route path="/empresa" element={
             <ProtectedRoute rol="empresa">
               <EmpresaDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/crear-busqueda-laboral" element={
+            <ProtectedRoute rol="empresa">
+              <CrearBusquedaLaboral />
+            </ProtectedRoute>
+          } />
+          <Route path="/mis-busquedas-laborales" element={
+            <ProtectedRoute rol="empresa">
+              <ListaBusquedas />
             </ProtectedRoute>
           } />
           <Route path="/admin" element={
