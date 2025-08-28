@@ -48,10 +48,36 @@ export default function AgregarCandidatoManual() {
     puntuacion: ''
   });
 
+  // Función para cargar todos los candidatos
+  const cargarTodosCandidatos = async () => {
+    try {
+      setSearching(true);
+      console.log('👥 Cargando todos los candidatos disponibles...');
+      console.log('🌐 URL de API:', `${process.env.REACT_APP_API_URL || 'http://localhost:8000/api'}/candidatos`);
+      
+      const response = await api.get('/candidatos');
+      const candidatos = response.data;
+      
+      console.log('📋 Total de candidatos encontrados:', candidatos.length);
+      console.log('🔍 Primeros candidatos:', candidatos.slice(0, 3));
+      setCandidatosEncontrados(candidatos);
+      
+    } catch (err) {
+      console.error('❌ Error al cargar candidatos:', err);
+      console.error('❌ Detalles del error:', err.response?.data || err.message);
+      setCandidatosEncontrados([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
   // Cargar datos iniciales
   useEffect(() => {
     const loadData = async () => {
-      if (!user?.id || !busquedaId) return;
+      if (!user?.id || !busquedaId) {
+        console.log('⚠️ Faltan datos del usuario o busquedaId:', { userId: user?.id, busquedaId });
+        return;
+      }
       
       try {
         setLoading(true);
@@ -78,8 +104,10 @@ export default function AgregarCandidatoManual() {
         
         setBusquedaData(busqueda);
         
+        console.log('✅ Datos básicos cargados, ahora cargando candidatos...');
+        
       } catch (err) {
-        console.error('❌ Error al cargar datos:', err);
+        console.error('❌ Error al cargar datos básicos:', err);
         if (err.response?.status === 404) {
           setError('No se encontró la búsqueda laboral solicitada.');
           setTimeout(() => navigate('/mis-busquedas-laborales'), 3000);
@@ -97,15 +125,28 @@ export default function AgregarCandidatoManual() {
     loadData();
   }, [user?.id, busquedaId, navigate]);
 
+  // Cargar candidatos cuando los datos básicos estén listos
+  useEffect(() => {
+    if (!loading && !error) {
+      console.log('🚀 Iniciando carga de candidatos...');
+      cargarTodosCandidatos().then(() => {
+        console.log('✅ Carga de candidatos completada');
+      });
+    }
+  }, [loading, error]);
+
   // Función para buscar candidatos existentes
   const buscarCandidatos = async (termino) => {
-    if (!termino.trim()) {
-      setCandidatosEncontrados([]);
-      return;
-    }
-
     try {
       setSearching(true);
+      
+      if (!termino.trim()) {
+        // Si no hay término de búsqueda, mostrar todos los candidatos
+        console.log('👥 Mostrando todos los candidatos disponibles...');
+        await cargarTodosCandidatos();
+        return;
+      }
+
       console.log('🔍 Buscando candidatos con término:', termino);
       
       const response = await api.get(`/candidatos?search=${encodeURIComponent(termino)}`);
@@ -489,7 +530,7 @@ export default function AgregarCandidatoManual() {
                       Buscar Candidato Existente
                     </h5>
                     <p className="text-muted">
-                      Busca candidatos ya registrados en el sistema por nombre, email o teléfono
+                      Se muestran todos los candidatos disponibles. Puedes filtrar por nombre, email o teléfono
                     </p>
                   </div>
 
@@ -497,6 +538,7 @@ export default function AgregarCandidatoManual() {
                   <div className="row mb-4">
                     <div className="col-12">
                       <label className="form-label fw-semibold">Buscar candidato:</label>
+                      
                       <div className="input-group input-group-lg">
                         <span className="input-group-text">
                           <i className="bi bi-search"></i>
@@ -518,14 +560,16 @@ export default function AgregarCandidatoManual() {
                     </div>
                   </div>
 
-                  {/* Resultados de búsqueda */}
-                  {terminoBusqueda && (
-                    <div className="mb-4">
-                      {candidatosEncontrados.length > 0 ? (
+                  {/* Resultados de búsqueda y lista de candidatos */}
+                  <div className="mb-4">
+                    {candidatosEncontrados.length > 0 ? (
                         <div>
                           <h6 className="fw-semibold text-success mb-3">
                             <i className="bi bi-people me-2"></i>
-                            {candidatosEncontrados.length} candidato(s) encontrado(s):
+                            {terminoBusqueda.trim() ? 
+                              `${candidatosEncontrados.length} candidato(s) encontrado(s):` :
+                              `${candidatosEncontrados.length} candidato(s) disponible(s):`
+                            }
                           </h6>
                           <div className="row g-3">
                             {candidatosEncontrados.map(candidato => (
@@ -566,7 +610,7 @@ export default function AgregarCandidatoManual() {
                             ))}
                           </div>
                         </div>
-                      ) : !searching && (
+                      ) : !searching && terminoBusqueda.trim() && (
                         <div className="text-center py-4">
                           <i className="bi bi-person-x text-muted mb-3" style={{ fontSize: '3rem' }}></i>
                           <h6 className="text-muted mb-3">No se encontraron candidatos</h6>
@@ -583,8 +627,7 @@ export default function AgregarCandidatoManual() {
                           </button>
                         </div>
                       )}
-                    </div>
-                  )}
+                  </div>
 
                   {/* Botón para crear nuevo */}
                   <div className="text-center pt-4 border-top">

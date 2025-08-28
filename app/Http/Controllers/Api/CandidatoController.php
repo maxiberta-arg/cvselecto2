@@ -24,49 +24,81 @@ class CandidatoController extends Controller
      */
     public function index()
     {
-        $query = \App\Models\Candidato::with(['user', 'educaciones', 'experiencias', 'postulaciones']);
-        
-        // Si hay parámetro de búsqueda, filtrar candidatos
-        if (request()->has('search') && !empty(request('search'))) {
-            $searchTerm = request('search');
+        try {
+            $query = \App\Models\Candidato::query();
             
-            $query->where(function($q) use ($searchTerm) {
-                // Buscar por nombre en la tabla users
-                $q->whereHas('user', function($userQuery) use ($searchTerm) {
-                    $userQuery->where('name', 'LIKE', '%' . $searchTerm . '%')
-                             ->orWhere('email', 'LIKE', '%' . $searchTerm . '%');
-                })
-                // O buscar por teléfono en candidatos
-                ->orWhere('telefono', 'LIKE', '%' . $searchTerm . '%');
+            // Si hay parámetro de búsqueda, filtrar candidatos
+            if (request()->has('search') && !empty(request('search'))) {
+                $searchTerm = request('search');
+                
+                $query->where(function($q) use ($searchTerm) {
+                    // Buscar por campos directos en candidatos
+                    $q->where('nombre', 'LIKE', '%' . $searchTerm . '%')
+                      ->orWhere('apellido', 'LIKE', '%' . $searchTerm . '%')
+                      ->orWhere('email', 'LIKE', '%' . $searchTerm . '%')
+                      ->orWhere('telefono', 'LIKE', '%' . $searchTerm . '%');
+                });
+            }
+            
+            // Obtener candidatos
+            $candidatos = $query->orderBy('created_at', 'desc')->get();
+            
+            // Formatear la respuesta
+            $candidatosFormatted = $candidatos->map(function($candidato) {
+                // Determinar el nombre para mostrar
+                $displayName = 'Sin nombre';
+                if ($candidato->user && $candidato->user->name) {
+                    // Si tiene usuario, usar el nombre del usuario
+                    $displayName = $candidato->user->name;
+                } elseif ($candidato->nombre && $candidato->apellido) {
+                    // Si es candidato manual con nombre y apellido
+                    $displayName = $candidato->nombre . ' ' . $candidato->apellido;
+                } elseif ($candidato->nombre) {
+                    // Solo nombre
+                    $displayName = $candidato->nombre;
+                } elseif ($candidato->apellido) {
+                    // Solo apellido
+                    $displayName = $candidato->apellido;
+                }
+                
+                // Determinar el email
+                $displayEmail = 'Sin email';
+                if ($candidato->user && $candidato->user->email) {
+                    $displayEmail = $candidato->user->email;
+                } elseif ($candidato->email) {
+                    $displayEmail = $candidato->email;
+                }
+                
+                return [
+                    'id' => $candidato->id,
+                    'name' => $displayName,
+                    'apellido' => $candidato->apellido ?? '',
+                    'email' => $displayEmail,
+                    'telefono' => $candidato->telefono,
+                    'direccion' => $candidato->direccion,
+                    'fecha_nacimiento' => $candidato->fecha_nacimiento,
+                    'nivel_educacion' => $candidato->nivel_educacion,
+                    'experiencia_anos' => $candidato->experiencia_anos,
+                    'disponibilidad' => $candidato->disponibilidad,
+                    'modalidad_preferida' => $candidato->modalidad_preferida,
+                    'pretension_salarial' => $candidato->pretension_salarial,
+                    'cv_path' => $candidato->cv_path,
+                    'linkedin_url' => $candidato->linkedin_url,
+                    'portfolio_url' => $candidato->portfolio_url,
+                    'created_at' => $candidato->created_at,
+                    'updated_at' => $candidato->updated_at
+                ];
             });
+            
+            return response()->json($candidatosFormatted)
+                ->header('Access-Control-Allow-Origin', '*')
+                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+            
+        } catch (\Exception $e) {
+            \Log::error('Error en CandidatoController@index: ' . $e->getMessage());
+            return response()->json(['error' => 'Error interno del servidor', 'message' => $e->getMessage()], 500);
         }
-        
-        // Ordenar por fecha de creación más reciente
-        $candidatos = $query->orderBy('created_at', 'desc')->get();
-        
-        // Formatear la respuesta para incluir datos del usuario
-        $candidatosFormatted = $candidatos->map(function($candidato) {
-            return [
-                'id' => $candidato->id,
-                'name' => $candidato->user->name ?? 'Sin nombre',
-                'email' => $candidato->user->email ?? 'Sin email',
-                'telefono' => $candidato->telefono,
-                'direccion' => $candidato->direccion,
-                'fecha_nacimiento' => $candidato->fecha_nacimiento,
-                'nivel_educacion' => $candidato->nivel_educacion,
-                'experiencia_anos' => $candidato->experiencia_anos,
-                'disponibilidad' => $candidato->disponibilidad,
-                'modalidad_preferida' => $candidato->modalidad_preferida,
-                'pretension_salarial' => $candidato->pretension_salarial,
-                'cv_path' => $candidato->cv_path,
-                'linkedin_url' => $candidato->linkedin_url,
-                'portfolio_url' => $candidato->portfolio_url,
-                'created_at' => $candidato->created_at,
-                'updated_at' => $candidato->updated_at
-            ];
-        });
-        
-        return response()->json($candidatosFormatted);
     }
 
     /**

@@ -12,8 +12,9 @@ use App\Http\Controllers\Api\PostulacionController;
 // Rutas públicas (sin autenticación)
 Route::post('login', [AuthController::class, 'login']);
 
-// Ruta temporal para creación manual de candidatos (PARA TESTING)
+// Rutas temporales para desarrollo (SIN AUTENTICACIÓN - SOLO PARA TESTING)
 Route::post('candidatos', [CandidatoController::class, 'store']);
+Route::get('candidatos', [CandidatoController::class, 'index']);
 
 // Rutas que requieren autenticación
 Route::middleware('auth:sanctum')->group(function () {
@@ -23,7 +24,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('user/profile', [AuthController::class, 'updateProfile']);
     
     // Candidatos (resto de operaciones)
-    Route::get('candidatos', [CandidatoController::class, 'index']);
     Route::get('candidatos/{candidato}', [CandidatoController::class, 'show']);
     Route::put('candidatos/{candidato}', [CandidatoController::class, 'update']);
     Route::delete('candidatos/{candidato}', [CandidatoController::class, 'destroy']);
