@@ -9,6 +9,7 @@ import PerfilEmpresa from '../views/PerfilEmpresa';
 import PerfilAdmin from '../views/PerfilAdmin';
 import CrearBusquedaLaboral from '../views/CrearBusquedaLaboral';
 import ListaBusquedas from '../views/ListaBusquedas';
+import EditarBusquedaLaboral from '../views/EditarBusquedaLaboral';
 import Login from '../views/Login';
 import Navbar from '../components/Navbar';
 import ProtectedRoute from './ProtectedRoute';
@@ -74,6 +75,11 @@ function AppContent() {
           <Route path="/mis-busquedas-laborales" element={
             <ProtectedRoute rol="empresa">
               <ListaBusquedas />
+            </ProtectedRoute>
+          } />
+          <Route path="/editar-busqueda-laboral/:id" element={
+            <ProtectedRoute rol="empresa">
+              <EditarBusquedaLaboral />
             </ProtectedRoute>
           } />
           <Route path="/admin" element={
