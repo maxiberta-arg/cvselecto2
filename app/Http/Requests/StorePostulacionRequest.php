@@ -24,8 +24,10 @@ class StorePostulacionRequest extends FormRequest
         return [
             'busqueda_id' => 'required|exists:busquedas_laborales,id',
             'candidato_id' => 'required|exists:candidatos,id',
-            'estado' => 'in:postulado,en proceso,rechazado,seleccionado',
+            'estado' => 'nullable|in:postulado,en proceso,rechazado,seleccionado',
             'fecha_postulacion' => 'nullable|date',
+            'notas_empresa' => 'nullable|string|max:1000',
+            'puntuacion' => 'nullable|numeric|min:0|max:10',
         ];
     }
 }

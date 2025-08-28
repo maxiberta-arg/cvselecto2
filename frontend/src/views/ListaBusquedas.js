@@ -372,8 +372,18 @@ export default function ListaBusquedas() {
                             className="btn btn-outline-primary btn-sm"
                             onClick={() => navigate(`/editar-busqueda-laboral/${busqueda.id}`)}
                             disabled={actionLoading === busqueda.id}
+                            title="Editar búsqueda"
                           >
                             <i className="bi bi-pencil"></i>
+                          </button>
+                          
+                          <button 
+                            className="btn btn-outline-info btn-sm"
+                            onClick={() => navigate(`/agregar-candidato-manual/${busqueda.id}`)}
+                            disabled={actionLoading === busqueda.id}
+                            title="Agregar candidato"
+                          >
+                            <i className="bi bi-person-plus"></i>
                           </button>
                           
                           {busqueda.estado === 'abierta' && (
@@ -381,6 +391,7 @@ export default function ListaBusquedas() {
                               className="btn btn-outline-warning btn-sm"
                               onClick={() => cambiarEstadoBusqueda(busqueda.id, 'pausada')}
                               disabled={actionLoading === busqueda.id}
+                              title="Pausar búsqueda"
                             >
                               {actionLoading === busqueda.id ? (
                                 <span className="spinner-border spinner-border-sm"></span>
@@ -395,6 +406,7 @@ export default function ListaBusquedas() {
                               className="btn btn-outline-success btn-sm"
                               onClick={() => cambiarEstadoBusqueda(busqueda.id, 'abierta')}
                               disabled={actionLoading === busqueda.id}
+                              title="Reanudar búsqueda"
                             >
                               {actionLoading === busqueda.id ? (
                                 <span className="spinner-border spinner-border-sm"></span>
@@ -409,6 +421,7 @@ export default function ListaBusquedas() {
                               className="btn btn-outline-danger btn-sm"
                               onClick={() => cambiarEstadoBusqueda(busqueda.id, 'cerrada')}
                               disabled={actionLoading === busqueda.id}
+                              title="Cerrar búsqueda"
                             >
                               {actionLoading === busqueda.id ? (
                                 <span className="spinner-border spinner-border-sm"></span>

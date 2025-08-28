@@ -24,8 +24,49 @@ class CandidatoController extends Controller
      */
     public function index()
     {
-        // Retorna todos los candidatos con sus relaciones principales
-        return response()->json(\App\Models\Candidato::with(['user', 'educaciones', 'experiencias', 'postulaciones'])->get());
+        $query = \App\Models\Candidato::with(['user', 'educaciones', 'experiencias', 'postulaciones']);
+        
+        // Si hay parámetro de búsqueda, filtrar candidatos
+        if (request()->has('search') && !empty(request('search'))) {
+            $searchTerm = request('search');
+            
+            $query->where(function($q) use ($searchTerm) {
+                // Buscar por nombre en la tabla users
+                $q->whereHas('user', function($userQuery) use ($searchTerm) {
+                    $userQuery->where('name', 'LIKE', '%' . $searchTerm . '%')
+                             ->orWhere('email', 'LIKE', '%' . $searchTerm . '%');
+                })
+                // O buscar por teléfono en candidatos
+                ->orWhere('telefono', 'LIKE', '%' . $searchTerm . '%');
+            });
+        }
+        
+        // Ordenar por fecha de creación más reciente
+        $candidatos = $query->orderBy('created_at', 'desc')->get();
+        
+        // Formatear la respuesta para incluir datos del usuario
+        $candidatosFormatted = $candidatos->map(function($candidato) {
+            return [
+                'id' => $candidato->id,
+                'name' => $candidato->user->name ?? 'Sin nombre',
+                'email' => $candidato->user->email ?? 'Sin email',
+                'telefono' => $candidato->telefono,
+                'direccion' => $candidato->direccion,
+                'fecha_nacimiento' => $candidato->fecha_nacimiento,
+                'nivel_educacion' => $candidato->nivel_educacion,
+                'experiencia_anos' => $candidato->experiencia_anos,
+                'disponibilidad' => $candidato->disponibilidad,
+                'modalidad_preferida' => $candidato->modalidad_preferida,
+                'pretension_salarial' => $candidato->pretension_salarial,
+                'cv_path' => $candidato->cv_path,
+                'linkedin_url' => $candidato->linkedin_url,
+                'portfolio_url' => $candidato->portfolio_url,
+                'created_at' => $candidato->created_at,
+                'updated_at' => $candidato->updated_at
+            ];
+        });
+        
+        return response()->json($candidatosFormatted);
     }
 
     /**
@@ -60,15 +101,122 @@ class CandidatoController extends Controller
      */
     public function store(StoreCandidatoRequest $request)
     {
-        $data = $request->validated();
-        // Procesar imagen si viene en la request
-        if ($request->hasFile('avatar')) {
-            $file = $request->file('avatar');
-            $path = $file->store('avatars', 'public');
-            $data['avatar'] = '/storage/' . $path;
+        try {
+            \DB::beginTransaction();
+            
+            $data = $request->validated();
+            
+            // Si se está creando desde formulario manual (tiene name y email), crear usuario también
+            if (isset($data['name']) && isset($data['email'])) {
+                
+                // Verificar que no exista ya un usuario con este email
+                $existingUser = \App\Models\User::where('email', $data['email'])->first();
+                if ($existingUser) {
+                    // Si existe usuario, verificar si ya tiene candidato
+                    $existingCandidato = \App\Models\Candidato::where('user_id', $existingUser->id)->first();
+                    if ($existingCandidato) {
+                        return response()->json([
+                            'message' => 'Ya existe un candidato registrado con este email.',
+                            'candidato_id' => $existingCandidato->id
+                        ], 409);
+                    }
+                    
+                    // Si usuario existe pero no tiene candidato, usar usuario existente
+                    $user = $existingUser;
+                } else {
+                    // Crear nuevo usuario
+                    $user = \App\Models\User::create([
+                        'name' => $data['name'],
+                        'email' => $data['email'],
+                        'password' => bcrypt('temporal123'), // Password temporal
+                        'email_verified_at' => now() // Auto-verificado para candidatos manuales
+                    ]);
+                }
+                
+                // Remover name y email del array de candidato
+                unset($data['name'], $data['email']);
+                
+                // Asignar user_id
+                $data['user_id'] = $user->id;
+                
+                // Si no hay apellido proporcionado, usar un valor por defecto
+                if (!isset($data['apellido']) || empty($data['apellido'])) {
+                    $data['apellido'] = '-'; // Valor por defecto cuando no se proporciona
+                }
+            }
+
+            // Procesar archivo CV si viene en la request
+            if ($request->hasFile('cv_path')) {
+                $file = $request->file('cv_path');
+                
+                // Validar archivo
+                if ($file->getSize() > 5 * 1024 * 1024) { // 5MB máximo
+                    return response()->json([
+                        'message' => 'El archivo CV no puede superar los 5MB'
+                    ], 422);
+                }
+                
+                if ($file->getClientOriginalExtension() !== 'pdf') {
+                    return response()->json([
+                        'message' => 'Solo se permiten archivos PDF para el CV'
+                    ], 422);
+                }
+                
+                // Generar nombre único (usar timestamp si no hay usuario creado aún)
+                $userId = isset($user) ? $user->id : 'temp_' . time();
+                $filename = 'cv_' . time() . '_' . $userId . '.pdf';
+                $path = $file->storeAs('cvs', $filename, 'public');
+                $data['cv_path'] = '/storage/' . $path;
+            }
+
+            // Procesar imagen si viene en la request (para futuras mejoras)
+            if ($request->hasFile('avatar')) {
+                $file = $request->file('avatar');
+                $path = $file->store('avatars', 'public');
+                $data['avatar'] = '/storage/' . $path;
+            }
+
+            // Crear candidato
+            $candidato = \App\Models\Candidato::create($data);
+            
+            // Cargar relaciones para la respuesta
+            $candidato->load('user');
+            
+            \DB::commit();
+            
+            // Formatear respuesta
+            $candidatoFormatted = [
+                'id' => $candidato->id,
+                'name' => $candidato->user->name,
+                'email' => $candidato->user->email,
+                'telefono' => $candidato->telefono,
+                'direccion' => $candidato->direccion,
+                'fecha_nacimiento' => $candidato->fecha_nacimiento,
+                'nivel_educacion' => $candidato->nivel_educacion,
+                'experiencia_anos' => $candidato->experiencia_anos,
+                'disponibilidad' => $candidato->disponibilidad,
+                'modalidad_preferida' => $candidato->modalidad_preferida,
+                'pretension_salarial' => $candidato->pretension_salarial,
+                'cv_path' => $candidato->cv_path,
+                'linkedin_url' => $candidato->linkedin_url,
+                'portfolio_url' => $candidato->portfolio_url,
+                'created_at' => $candidato->created_at,
+                'updated_at' => $candidato->updated_at
+            ];
+            
+            return response()->json($candidatoFormatted, 201);
+            
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            
+            \Log::error('Error al crear candidato: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'message' => 'Error interno del servidor al crear el candidato',
+                'error' => $e->getMessage()
+            ], 500);
         }
-        $candidato = \App\Models\Candidato::create($data);
-        return response()->json($candidato, 201);
     }
 
     /**

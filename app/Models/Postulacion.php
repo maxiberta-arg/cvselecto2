@@ -13,6 +13,16 @@ class Postulacion extends Model
     // Especificar el nombre correcto de la tabla
     protected $table = 'postulaciones';
 
+    // Campos que se pueden llenar masivamente
+    protected $fillable = [
+        'busqueda_id',
+        'candidato_id',
+        'estado',
+        'fecha_postulacion',
+        'notas_empresa',
+        'puntuacion'
+    ];
+
     // Relación muchos a uno con BusquedaLaboral
     public function busquedaLaboral()
     {

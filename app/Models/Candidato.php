@@ -22,7 +22,15 @@ class Candidato extends Model
         'habilidades',
         'linkedin',
         'experiencia_resumida',
-        'educacion_resumida'
+        'educacion_resumida',
+        // Nuevos campos para creación manual
+        'nivel_educacion',
+        'experiencia_anos',
+        'disponibilidad',
+        'modalidad_preferida',
+        'pretension_salarial',
+        'linkedin_url',
+        'portfolio_url'
     ];
 
     // Relación uno a uno con User
