@@ -52,19 +52,12 @@ export default function AgregarCandidatoManual() {
   const cargarTodosCandidatos = async () => {
     try {
       setSearching(true);
-      console.log('👥 Cargando todos los candidatos disponibles...');
-      console.log('🌐 URL de API:', `${process.env.REACT_APP_API_URL || 'http://localhost:8000/api'}/candidatos`);
-      
       const response = await api.get('/candidatos');
       const candidatos = response.data;
-      
-      console.log('📋 Total de candidatos encontrados:', candidatos.length);
-      console.log('🔍 Primeros candidatos:', candidatos.slice(0, 3));
       setCandidatosEncontrados(candidatos);
       
     } catch (err) {
-      console.error('❌ Error al cargar candidatos:', err);
-      console.error('❌ Detalles del error:', err.response?.data || err.message);
+      console.error('Error al cargar candidatos:', err.response?.data || err.message);
       setCandidatosEncontrados([]);
     } finally {
       setSearching(false);
@@ -75,15 +68,12 @@ export default function AgregarCandidatoManual() {
   useEffect(() => {
     const loadData = async () => {
       if (!user?.id || !busquedaId) {
-        console.log('⚠️ Faltan datos del usuario o busquedaId:', { userId: user?.id, busquedaId });
         return;
       }
       
       try {
         setLoading(true);
         setError(null);
-        
-        console.log('📋 Cargando datos para busqueda ID:', busquedaId);
         
         // Cargar datos de la empresa
         const empresaResponse = await api.get(`/empresas/by-user/${user.id}`);
@@ -94,9 +84,6 @@ export default function AgregarCandidatoManual() {
         const busquedaResponse = await api.get(`/busquedas-laborales/${busquedaId}`);
         const busqueda = busquedaResponse.data;
         
-        console.log('🏢 Empresa:', empresa.razon_social);
-        console.log('📋 Búsqueda:', busqueda.titulo);
-        
         // Verificar que la búsqueda pertenece a la empresa del usuario
         if (parseInt(busqueda.empresa_id) !== parseInt(empresa.id)) {
           throw new Error('No tienes permisos para agregar candidatos a esta búsqueda');
@@ -104,10 +91,8 @@ export default function AgregarCandidatoManual() {
         
         setBusquedaData(busqueda);
         
-        console.log('✅ Datos básicos cargados, ahora cargando candidatos...');
-        
       } catch (err) {
-        console.error('❌ Error al cargar datos básicos:', err);
+        console.error('Error al cargar datos básicos:', err);
         if (err.response?.status === 404) {
           setError('No se encontró la búsqueda laboral solicitada.');
           setTimeout(() => navigate('/mis-busquedas-laborales'), 3000);
@@ -128,10 +113,7 @@ export default function AgregarCandidatoManual() {
   // Cargar candidatos cuando los datos básicos estén listos
   useEffect(() => {
     if (!loading && !error) {
-      console.log('🚀 Iniciando carga de candidatos...');
-      cargarTodosCandidatos().then(() => {
-        console.log('✅ Carga de candidatos completada');
-      });
+      cargarTodosCandidatos();
     }
   }, [loading, error]);
 
@@ -142,17 +124,12 @@ export default function AgregarCandidatoManual() {
       
       if (!termino.trim()) {
         // Si no hay término de búsqueda, mostrar todos los candidatos
-        console.log('👥 Mostrando todos los candidatos disponibles...');
         await cargarTodosCandidatos();
         return;
       }
-
-      console.log('🔍 Buscando candidatos con término:', termino);
       
       const response = await api.get(`/candidatos?search=${encodeURIComponent(termino)}`);
       const candidatos = response.data;
-      
-      console.log('👥 Candidatos encontrados:', candidatos.length);
       setCandidatosEncontrados(candidatos);
       
     } catch (err) {
@@ -266,8 +243,6 @@ export default function AgregarCandidatoManual() {
           candidatoData.append(key, formDataCandidato[key]);
         }
       });
-
-      console.log('👤 Creando nuevo candidato...');
       
       // Crear candidato
       const candidatoResponse = await api.post('/candidatos', candidatoData, {
@@ -277,13 +252,12 @@ export default function AgregarCandidatoManual() {
       });
       
       const nuevoCandidato = candidatoResponse.data;
-      console.log('✅ Candidato creado:', nuevoCandidato);
       
       // Crear postulación
       await crearPostulacion(nuevoCandidato.id);
       
     } catch (err) {
-      console.error('❌ Error al crear candidato:', err);
+      console.error('Error al crear candidato:', err);
       
       if (err.response?.status === 422) {
         const backendErrors = err.response.data.errors || {};
@@ -292,7 +266,6 @@ export default function AgregarCandidatoManual() {
       } else if (err.response?.status === 409) {
         // Candidato duplicado - ofrecer opción de usar el existente
         const responseData = err.response.data;
-        console.log('👤 Candidato duplicado detectado:', responseData);
         
         if (responseData.candidate_id) {
           const confirmarUso = window.confirm(
@@ -304,7 +277,6 @@ export default function AgregarCandidatoManual() {
           
           if (confirmarUso) {
             try {
-              console.log('🔄 Usando candidato existente:', responseData.candidate_id);
               await crearPostulacion(responseData.candidate_id);
               return; // Salir exitosamente
             } catch (postulacionErr) {
@@ -333,12 +305,8 @@ export default function AgregarCandidatoManual() {
         candidato_id: candidatoId,
         ...formDataPostulacion
       };
-
-      console.log('📝 Creando postulación:', postulacionData);
       
       const response = await api.post('/postulaciones', postulacionData);
-      
-      console.log('✅ Postulación creada:', response.data);
       
       setSuccess('¡Candidato agregado exitosamente a la búsqueda laboral!');
       
@@ -348,7 +316,7 @@ export default function AgregarCandidatoManual() {
       }, 2000);
       
     } catch (err) {
-      console.error('❌ Error al crear postulación:', err);
+      console.error('Error al crear postulación:', err);
       
       if (err.response?.status === 409) {
         setError('Este candidato ya está postulado para esta búsqueda laboral.');

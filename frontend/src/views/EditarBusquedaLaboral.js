@@ -35,20 +35,14 @@ export default function EditarBusquedaLaboral() {
         setLoading(true);
         setError(null);
         
-        console.log('📋 Cargando búsqueda laboral ID:', id);
-        
         // Cargar datos de la empresa
         const empresaResponse = await api.get(`/empresas/by-user/${user.id}`);
         const empresa = empresaResponse.data;
         setEmpresaData(empresa);
         
-        console.log('🏢 Empresa cargada:', empresa.razon_social);
-        
         // Cargar datos de la búsqueda específica
         const busquedaResponse = await api.get(`/busquedas-laborales/${id}`);
         const busqueda = busquedaResponse.data;
-        
-        console.log('📋 Búsqueda cargada:', busqueda);
         
         // Verificar que la búsqueda pertenece a la empresa del usuario
         if (parseInt(busqueda.empresa_id) !== parseInt(empresa.id)) {
@@ -166,11 +160,7 @@ export default function EditarBusquedaLaboral() {
     setFieldErrors({});
 
     try {
-      console.log('💾 Actualizando búsqueda:', formData);
-
       const response = await api.put(`/busquedas-laborales/${id}`, formData);
-      
-      console.log('✅ Búsqueda actualizada:', response.data);
       
       setSuccess('¡Búsqueda laboral actualizada exitosamente!');
       setBusquedaOriginal(response.data);

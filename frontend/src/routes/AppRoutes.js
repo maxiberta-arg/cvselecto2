@@ -11,6 +11,7 @@ import CrearBusquedaLaboral from '../views/CrearBusquedaLaboral';
 import ListaBusquedas from '../views/ListaBusquedas';
 import EditarBusquedaLaboral from '../views/EditarBusquedaLaboral';
 import AgregarCandidatoManual from '../views/AgregarCandidatoManual';
+import GestionCandidatos from '../views/GestionCandidatos';
 import Login from '../views/Login';
 import Navbar from '../components/Navbar';
 import ProtectedRoute from './ProtectedRoute';
@@ -86,6 +87,11 @@ function AppContent() {
           <Route path="/agregar-candidato-manual/:busquedaId" element={
             <ProtectedRoute rol="empresa">
               <AgregarCandidatoManual />
+            </ProtectedRoute>
+          } />
+          <Route path="/gestion-candidatos" element={
+            <ProtectedRoute rol="empresa">
+              <GestionCandidatos />
             </ProtectedRoute>
           } />
           <Route path="/admin" element={

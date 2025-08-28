@@ -146,11 +146,7 @@ export default function CrearBusquedaLaboral() {
         empresa_id: empresaData.id
       };
 
-      console.log('Enviando datos:', payload);
-
       const response = await api.post('/busquedas-laborales', payload);
-      
-      console.log('Búsqueda laboral creada:', response.data);
       
       setSuccess('¡Búsqueda laboral creada exitosamente!');
       
