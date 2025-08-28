@@ -24,28 +24,44 @@ export default function ListaBusquedas() {
         setLoading(true);
         setError(null);
         
+        console.log('🔍 Cargando datos de empresa para usuario:', user.id);
+        
         // Primero obtener datos de la empresa
         const empresaResponse = await api.get(`/empresas/by-user/${user.id}`);
         const empresa = empresaResponse.data;
         setEmpresaData(empresa);
         
-        // Luego obtener búsquedas laborales filtradas por empresa
+        console.log('🏢 Empresa encontrada:', empresa);
+        console.log('🆔 ID de empresa:', empresa.id);
+        
+        // Luego obtener TODAS las búsquedas laborales
+        console.log('📋 Obteniendo todas las búsquedas laborales...');
         const busquedasResponse = await api.get('/busquedas-laborales');
         const todasBusquedas = busquedasResponse.data;
         
+        console.log('📊 Total de búsquedas en sistema:', todasBusquedas.length);
+        console.log('📋 Todas las búsquedas:', todasBusquedas);
+        
         // Filtrar búsquedas de la empresa actual
-        const busquedasEmpresa = todasBusquedas.filter(busqueda => 
-          busqueda.empresa_id === empresa.id
-        );
+        const busquedasEmpresa = todasBusquedas.filter(busqueda => {
+          console.log(`🔍 Comparando búsqueda ${busqueda.id}: empresa_id=${busqueda.empresa_id} vs ${empresa.id}`);
+          return parseInt(busqueda.empresa_id) === parseInt(empresa.id);
+        });
+        
+        console.log('✅ Búsquedas filtradas para la empresa:', busquedasEmpresa.length);
+        console.log('📋 Búsquedas de la empresa:', busquedasEmpresa);
         
         setBusquedas(busquedasEmpresa);
         
       } catch (err) {
-        console.error('Error al cargar búsquedas:', err);
+        console.error('❌ Error al cargar búsquedas:', err);
+        console.error('❌ Response data:', err.response?.data);
+        console.error('❌ Response status:', err.response?.status);
+        
         if (err.response?.status === 404) {
           setError('No se encontró el perfil de empresa. Complete su perfil primero.');
         } else {
-          setError('Error al cargar las búsquedas laborales');
+          setError(`Error al cargar las búsquedas laborales: ${err.response?.data?.message || err.message}`);
         }
       } finally {
         setLoading(false);
@@ -189,7 +205,8 @@ export default function ListaBusquedas() {
                 <div>
                   <h3 className="fw-bold text-white mb-1">Mis Búsquedas Laborales</h3>
                   <p className="text-white-50 mb-0">
-                    {empresaData && `${empresaData.razon_social} • ${busquedas.length} búsquedas`}
+                    {empresaData && `${empresaData.razon_social} • ${busquedas.length} búsquedas totales`}
+                    {loading && ' • Cargando...'}
                   </p>
                 </div>
               </div>
@@ -321,7 +338,13 @@ export default function ListaBusquedas() {
                         <div className="flex-grow-1">
                           <h5 className="fw-bold mb-2 text-primary">{busqueda.titulo}</h5>
                           <div className="d-flex align-items-center gap-3 mb-2">
-                            <span className={`badge bg-${getEstadoColor(busqueda.estado)} bg-opacity-20 text-${getEstadoColor(busqueda.estado)} px-3 py-2`}>
+                            <span className={`badge px-3 py-2 fw-semibold ${
+                              busqueda.estado === 'abierta' 
+                                ? 'bg-success text-white' 
+                                : busqueda.estado === 'pausada'
+                                ? 'bg-warning text-dark'
+                                : 'bg-danger text-white'
+                            }`}>
                               <i className={`bi ${getEstadoIcon(busqueda.estado)} me-1`}></i>
                               {busqueda.estado.charAt(0).toUpperCase() + busqueda.estado.slice(1)}
                             </span>
