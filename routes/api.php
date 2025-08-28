@@ -25,6 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Empresas
     Route::apiResource('empresas', EmpresaController::class);
+    Route::get('empresas/by-user/{userId}', [EmpresaController::class, 'getByUser']);
     
     // Búsquedas laborales
     Route::apiResource('busquedas-laborales', BusquedaLaboralController::class);
