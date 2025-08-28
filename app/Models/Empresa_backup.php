@@ -106,5 +106,11 @@ class Empresa extends Model
     public function busquedasLaborales()
     {
         return $this->hasMany(BusquedaLaboral::class, 'empresa_id');
-    }
+    }space App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Empresa extends Model
+{
+    //
 }

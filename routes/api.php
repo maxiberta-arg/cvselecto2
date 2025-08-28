@@ -26,6 +26,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Empresas
     Route::apiResource('empresas', EmpresaController::class);
     Route::get('empresas/by-user/{userId}', [EmpresaController::class, 'getByUser']);
+    Route::patch('empresas/{empresa}/verification', [EmpresaController::class, 'toggleVerification']);
+    Route::get('empresas-pending-verification', [EmpresaController::class, 'pendingVerification']);
     
     // Búsquedas laborales
     Route::apiResource('busquedas-laborales', BusquedaLaboralController::class);

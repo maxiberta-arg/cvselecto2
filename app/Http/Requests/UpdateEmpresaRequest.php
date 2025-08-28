@@ -12,7 +12,7 @@ class UpdateEmpresaRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return true; // Autorizado para usuarios autenticados
     }
 
     /**
@@ -22,11 +22,18 @@ class UpdateEmpresaRequest extends FormRequest
      */
     public function rules(): array
     {
-        $empresaId = $this->route('empresa');
-        
+        $empresaId = $this->route('empresa') ? $this->route('empresa')->id : null;
+
         return [
             // Campos básicos obligatorios
-            'razon_social' => 'sometimes|required|string|min:3|max:255',
+            'razon_social' => [
+                'sometimes',
+                'required',
+                'string',
+                'min:3',
+                'max:255',
+                'unique:empresas,razon_social,' . $empresaId
+            ],
             'cuit' => [
                 'sometimes',
                 'required',
@@ -34,80 +41,144 @@ class UpdateEmpresaRequest extends FormRequest
                 new CuitArgentino(),
                 'unique:empresas,cuit,' . $empresaId
             ],
-            'telefono' => 'sometimes|required|string|min:8|max:20',
-            'direccion' => 'sometimes|required|string|min:10|max:255',
-            'descripcion' => 'sometimes|required|string|min:50|max:2000',
             
-            // Campos adicionales opcionales
-            'sitio_web' => 'nullable|url|max:255',
-            'linkedin_url' => 'nullable|url|max:255|regex:/linkedin\.com/',
-            'sector' => 'nullable|string|max:100',
-            'empleados_cantidad' => 'nullable|integer|min:1|max:100000',
+            // Información de contacto
+            'telefono' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'regex:/^[\d\s\-\+\(\)]+$/',
+                'min:8',
+                'max:20'
+            ],
+            'direccion' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'min:10',
+                'max:255'
+            ],
+            'email_contacto' => [
+                'sometimes',
+                'nullable',
+                'email',
+                'max:255'
+            ],
+            'persona_contacto' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'min:3',
+                'max:255'
+            ],
+            
+            // Descripción e información corporativa
+            'descripcion' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'min:50',
+                'max:2000'
+            ],
+            'sector' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:100'
+            ],
+            'tamaño_empresa' => [
+                'sometimes',
+                'nullable',
+                'integer',
+                'min:1',
+                'max:999999'
+            ],
+            'año_fundacion' => [
+                'sometimes',
+                'nullable',
+                'integer',
+                'min:1800',
+                'max:' . date('Y')
+            ],
+            
+            // URLs y redes sociales
+            'sitio_web' => [
+                'sometimes',
+                'nullable',
+                'url',
+                'max:255'
+            ],
+            'linkedin_url' => [
+                'sometimes',
+                'nullable',
+                'url',
+                'regex:/^https?:\/\/(www\.)?linkedin\.com\/.*/',
+                'max:255'
+            ],
             
             // Archivos
             'logo' => [
+                'sometimes',
                 'nullable',
-                'file',
                 'image',
-                'max:2048', // 2MB
-                'mimes:jpeg,png,jpg,gif',
-                'dimensions:max_width=1000,max_height=1000'
-            ],
-
-            // Campos del sistema (solo para admin)
-            'estado_verificacion' => 'sometimes|in:pendiente,verificada,rechazada',
-            'notas_verificacion' => 'nullable|string|max:1000'
+                'mimes:jpg,jpeg,png,gif',
+                'max:2048' // 2MB
+            ]
         ];
     }
 
     /**
-     * Mensajes personalizados de validación
+     * Get custom messages for validator errors.
      */
     public function messages(): array
     {
         return [
             'razon_social.required' => 'La razón social es obligatoria',
             'razon_social.min' => 'La razón social debe tener al menos 3 caracteres',
+            'razon_social.unique' => 'Esta razón social ya está registrada',
+            
             'cuit.required' => 'El CUIT es obligatorio',
-            'cuit.unique' => 'Este CUIT ya está registrado en el sistema',
-            'telefono.required' => 'El teléfono es obligatorio',
+            'cuit.unique' => 'Este CUIT ya está registrado',
+            
+            'telefono.regex' => 'El formato del teléfono no es válido',
             'telefono.min' => 'El teléfono debe tener al menos 8 caracteres',
-            'direccion.required' => 'La dirección es obligatoria',
-            'direccion.min' => 'Ingrese una dirección completa (mínimo 10 caracteres)',
-            'descripcion.required' => 'La descripción de la empresa es obligatoria',
+            
+            'direccion.min' => 'La dirección debe ser más específica (mínimo 10 caracteres)',
+            
+            'email_contacto.email' => 'Ingrese un email de contacto válido',
+            
             'descripcion.min' => 'La descripción debe tener al menos 50 caracteres',
             'descripcion.max' => 'La descripción no puede superar los 2000 caracteres',
+            
+            'tamaño_empresa.min' => 'El tamaño de empresa debe ser mayor a 0',
+            
+            'año_fundacion.min' => 'El año de fundación no puede ser anterior a 1800',
+            'año_fundacion.max' => 'El año de fundación no puede ser futuro',
+            
             'sitio_web.url' => 'Ingrese una URL válida para el sitio web',
-            'linkedin_url.url' => 'Ingrese una URL válida de LinkedIn',
-            'linkedin_url.regex' => 'La URL debe pertenecer al dominio linkedin.com',
-            'empleados_cantidad.integer' => 'La cantidad de empleados debe ser un número',
-            'empleados_cantidad.min' => 'La cantidad mínima de empleados es 1',
+            
+            'linkedin_url.url' => 'Ingrese una URL válida',
+            'linkedin_url.regex' => 'Debe ser una URL válida de LinkedIn',
+            
             'logo.image' => 'El logo debe ser una imagen',
-            'logo.max' => 'El logo no puede superar los 2MB',
             'logo.mimes' => 'El logo debe ser JPG, PNG o GIF',
-            'logo.dimensions' => 'El logo no puede superar 1000x1000 píxeles'
+            'logo.max' => 'El logo no puede superar los 2MB'
         ];
     }
 
     /**
-     * Preparar datos antes de la validación
+     * Get custom attributes for validator errors.
      */
-    protected function prepareForValidation(): void
+    public function attributes(): array
     {
-        // Limpiar y formatear CUIT
-        if ($this->has('cuit')) {
-            $this->merge([
-                'cuit' => preg_replace('/[^0-9]/', '', $this->cuit)
-            ]);
-        }
-
-        // Limpiar URLs
-        if ($this->has('sitio_web') && $this->sitio_web) {
-            $url = $this->sitio_web;
-            if (!str_starts_with($url, 'http://') && !str_starts_with($url, 'https://')) {
-                $url = 'https://' . $url;
-            }
-            $this->merge(['sitio_web' => $url]);
-        }
+        return [
+            'razon_social' => 'razón social',
+            'email_contacto' => 'email de contacto',
+            'persona_contacto' => 'persona de contacto',
+            'tamaño_empresa' => 'tamaño de empresa',
+            'año_fundacion' => 'año de fundación',
+            'sitio_web' => 'sitio web',
+            'linkedin_url' => 'LinkedIn'
+        ];
     }
 }
