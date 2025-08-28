@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             CapacitacionSeeder::class,
             ExperienciaSeeder::class,
             EntrevistaSeeder::class,
+            TestingUserSeeder::class, // Usuarios específicos para testing
         ]);
     }
 }

@@ -74,6 +74,49 @@ class EmpresaController extends Controller
     public function update(UpdateEmpresaRequest $request, string $id)
     {
         $empresa = Empresa::findOrFail($id);
+        
+        // Actualizar datos del usuario asociado si se proporcionan
+        $user = $empresa->user;
+        if ($request->has('user_name') || $request->has('user_email') || $request->has('password')) {
+            $userDataToUpdate = [];
+            
+            if ($request->has('user_name') && $request->user_name) {
+                $userDataToUpdate['name'] = $request->user_name;
+            }
+            
+            if ($request->has('user_email') && $request->user_email) {
+                // Validar que el email no esté en uso por otro usuario
+                $emailExists = \App\Models\User::where('email', $request->user_email)
+                                              ->where('id', '!=', $user->id)
+                                              ->exists();
+                if ($emailExists) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Este email ya está en uso por otro usuario.',
+                        'errors' => ['user_email' => ['Este email ya está en uso por otro usuario.']]
+                    ], 422);
+                }
+                $userDataToUpdate['email'] = $request->user_email;
+            }
+            
+            if ($request->has('password') && $request->password) {
+                // Validar confirmación de contraseña
+                if (!$request->has('password_confirmation') || $request->password !== $request->password_confirmation) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'La confirmación de contraseña no coincide.',
+                        'errors' => ['password_confirmation' => ['La confirmación de contraseña no coincide.']]
+                    ], 422);
+                }
+                $userDataToUpdate['password'] = bcrypt($request->password);
+            }
+            
+            if (!empty($userDataToUpdate)) {
+                $user->update($userDataToUpdate);
+            }
+        }
+        
+        // Actualizar datos de la empresa
         $data = $request->validated();
         
         // Procesar logo si viene en la request
@@ -90,8 +133,12 @@ class EmpresaController extends Controller
         
         $empresa->update($data);
         
-        // Retornar empresa con relaciones
-        return response()->json($empresa->load('user'));
+        // Retornar respuesta de éxito
+        return response()->json([
+            'success' => true,
+            'message' => 'Perfil actualizado correctamente',
+            'empresa' => $empresa->load('user')
+        ]);
     }
 
     /**
