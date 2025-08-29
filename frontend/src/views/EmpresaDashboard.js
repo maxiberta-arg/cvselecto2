@@ -19,29 +19,55 @@ export default function EmpresaDashboard() {
   const email = user && (user.email || user.correo || user.nombre) ? (user.email || user.correo || user.nombre) : '';
   const nombre = email ? email.split('@')[0].replace('.', ' ') : 'Empresa';
 
-  // Cargar estadísticas de la empresa
+  // Cargar estadísticas reales de la empresa
   useEffect(() => {
     const cargarEstadisticas = async () => {
       try {
         setLoading(true);
-        // TODO: Implementar endpoints específicos para estadísticas
-        // Por ahora usaremos datos mock
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simular carga
+        
+        // Cargar datos de la empresa
+        const empresaResponse = await api.get(`/empresas/by-user/${user.id}`);
+        const empresa = empresaResponse.data;
+
+        // Cargar búsquedas de la empresa
+        const busquedasResponse = await api.get('/busquedas-laborales');
+        const todasLasBusquedas = busquedasResponse.data;
+        const busquedasEmpresa = todasLasBusquedas.filter(b => b.empresa_id === empresa.id);
+
+        // Cargar postulaciones
+        const postulacionesResponse = await api.get('/postulaciones');
+        const todasLasPostulaciones = postulacionesResponse.data;
+        const postulacionesEmpresa = todasLasPostulaciones.filter(
+          p => busquedasEmpresa.find(b => b.id === p.busqueda_id)
+        );
+
+        // Calcular estadísticas reales
+        const busquedasActivas = busquedasEmpresa.filter(b => b.estado === 'activa').length;
+        const candidatosUnicos = new Set(postulacionesEmpresa.map(p => p.candidato_id)).size;
+        const postulacionesPendientes = postulacionesEmpresa.filter(p => p.estado === 'postulado').length;
         
         setStats({
-          busquedasActivas: 3,
-          candidatosTotal: 15,
-          postulacionesPendientes: 7
+          busquedasActivas,
+          candidatosTotal: candidatosUnicos,
+          postulacionesPendientes
         });
       } catch (error) {
         console.error('Error cargando estadísticas:', error);
+        // Fallback a datos mock si falla la API
+        setStats({
+          busquedasActivas: 0,
+          candidatosTotal: 0,
+          postulacionesPendientes: 0
+        });
       } finally {
         setLoading(false);
       }
     };
 
-    cargarEstadisticas();
-  }, []);
+    if (user?.id) {
+      cargarEstadisticas();
+    }
+  }, [user?.id]);
 
   // Handlers de navegación
   const navegarAPerfil = () => navigate('/perfil-empresa');
@@ -219,10 +245,11 @@ export default function EmpresaDashboard() {
                   <div className="col-md-6 mb-2">
                     <button 
                       className="btn btn-success btn-lg w-100"
-                      onClick={() => navigate('/agregar-candidato')}
+                      onClick={() => navigate('/mis-busquedas-laborales')}
+                      title="Ve a tus búsquedas para agregar candidatos manualmente"
                     >
                       <i className="bi bi-person-plus me-2"></i>
-                      Agregar Candidato Manual
+                      Gestionar Candidatos
                     </button>
                   </div>
                 </div>

@@ -12,6 +12,8 @@ import ListaBusquedas from '../views/ListaBusquedas';
 import EditarBusquedaLaboral from '../views/EditarBusquedaLaboral';
 import AgregarCandidatoManual from '../views/AgregarCandidatoManual';
 import GestionCandidatos from '../views/GestionCandidatos';
+import ReportesEmpresa from '../views/ReportesEmpresa';
+import ConfiguracionEmpresa from '../views/ConfiguracionEmpresa';
 import Login from '../views/Login';
 import Navbar from '../components/Navbar';
 import ProtectedRoute from './ProtectedRoute';
@@ -92,6 +94,16 @@ function AppContent() {
           <Route path="/gestion-candidatos" element={
             <ProtectedRoute rol="empresa">
               <GestionCandidatos />
+            </ProtectedRoute>
+          } />
+          <Route path="/reportes-empresa" element={
+            <ProtectedRoute rol="empresa">
+              <ReportesEmpresa />
+            </ProtectedRoute>
+          } />
+          <Route path="/configuracion-empresa" element={
+            <ProtectedRoute rol="empresa">
+              <ConfiguracionEmpresa />
             </ProtectedRoute>
           } />
           <Route path="/admin" element={

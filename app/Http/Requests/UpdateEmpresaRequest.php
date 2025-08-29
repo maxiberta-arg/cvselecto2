@@ -36,7 +36,7 @@ class UpdateEmpresaRequest extends FormRequest
             'cuit' => [
                 'sometimes',
                 'string',
-                // new CuitArgentino(), // Temporalmente deshabilitado para testing
+                new CuitArgentino(),
                 'unique:empresas,cuit,' . $empresaId
             ],
             
