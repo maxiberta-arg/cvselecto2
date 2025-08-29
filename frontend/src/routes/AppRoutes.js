@@ -5,11 +5,12 @@ import CandidatoDashboard from '../views/CandidatoDashboard';
 import EmpresaDashboard from '../views/EmpresaDashboard';
 import AdminDashboard from '../views/AdminDashboard';
 import PerfilCandidatoMejorado from '../views/PerfilCandidatoMejorado';
-import PerfilEmpresa from '../views/PerfilEmpresa';
+import PerfilEmpresaRedirect from '../views/PerfilEmpresaRedirect';
 import PerfilAdmin from '../views/PerfilAdmin';
 import CrearBusquedaLaboral from '../views/CrearBusquedaLaboral';
 import ListaBusquedas from '../views/ListaBusquedas';
 import EditarBusquedaLaboral from '../views/EditarBusquedaLaboral';
+import BusquedaDetalle from '../views/BusquedaDetalle';
 import AgregarCandidatoManual from '../views/AgregarCandidatoManual';
 import GestionCandidatos from '../views/GestionCandidatos';
 import ReportesEmpresa from '../views/ReportesEmpresa';
@@ -58,7 +59,7 @@ function AppContent() {
           } />
           <Route path="/perfil-empresa" element={
             <ProtectedRoute rol="empresa">
-              <PerfilEmpresa />
+              <PerfilEmpresaRedirect />
             </ProtectedRoute>
           } />
           <Route path="/perfil-admin" element={
@@ -86,6 +87,11 @@ function AppContent() {
               <EditarBusquedaLaboral />
             </ProtectedRoute>
           } />
+          <Route path="/busqueda-detalle/:id" element={
+            <ProtectedRoute rol="empresa">
+              <BusquedaDetalle />
+            </ProtectedRoute>
+          } />
           <Route path="/agregar-candidato-manual/:busquedaId" element={
             <ProtectedRoute rol="empresa">
               <AgregarCandidatoManual />
@@ -94,6 +100,11 @@ function AppContent() {
           <Route path="/gestion-candidatos" element={
             <ProtectedRoute rol="empresa">
               <GestionCandidatos />
+            </ProtectedRoute>
+          } />
+          <Route path="/candidatos/:id" element={
+            <ProtectedRoute rol="empresa">
+              <PerfilCandidatoMejorado />
             </ProtectedRoute>
           } />
           <Route path="/reportes-empresa" element={

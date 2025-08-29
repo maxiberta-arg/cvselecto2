@@ -491,13 +491,30 @@ export default function ListaBusquedas() {
                             Creada {formatearFecha(busqueda.created_at)}
                           </small>
                         </div>
-                        <button 
-                          className="btn btn-primary btn-sm"
-                          onClick={() => navigate(`/busqueda-detalle/${busqueda.id}`)}
-                        >
-                          Ver Detalle
-                          <i className="bi bi-arrow-right ms-1"></i>
-                        </button>
+                        <div className="d-flex gap-2">
+                          <button 
+                            className="btn btn-outline-secondary btn-sm"
+                            onClick={() => navigate(`/busqueda-detalle/${busqueda.id}`)}
+                            title="Ver detalle completo"
+                          >
+                            <i className="bi bi-eye me-1"></i>
+                            Ver Detalle
+                          </button>
+                          <button 
+                            className="btn btn-outline-primary btn-sm"
+                            onClick={() => navigate(`/editar-busqueda-laboral/${busqueda.id}`)}
+                          >
+                            <i className="bi bi-pencil me-1"></i>
+                            Editar
+                          </button>
+                          <button 
+                            className="btn btn-primary btn-sm"
+                            onClick={() => navigate('/gestion-candidatos')}
+                          >
+                            <i className="bi bi-people me-1"></i>
+                            Ver Candidatos
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>

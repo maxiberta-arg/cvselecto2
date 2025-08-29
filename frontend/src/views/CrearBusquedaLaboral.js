@@ -40,7 +40,7 @@ export default function CrearBusquedaLaboral() {
         console.error('Error al cargar empresa:', err);
         if (err.response?.status === 404) {
           setError('No se encontró el perfil de empresa. Complete su perfil primero.');
-          setTimeout(() => navigate('/perfil-empresa'), 3000);
+          setTimeout(() => navigate('/configuracion-empresa'), 3000);
         } else {
           setError('Error al cargar los datos de la empresa');
         }

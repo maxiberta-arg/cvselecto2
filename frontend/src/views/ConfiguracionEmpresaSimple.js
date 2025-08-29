@@ -82,156 +82,6 @@ export default function ConfiguracionEmpresa() {
     }
   };
 
-  // Función de validación individual
-  const validateField = (name, value) => {
-    let error = '';
-    
-    setTouchedFields(prev => ({ ...prev, [name]: true }));
-    
-    switch (name) {
-      case 'name':
-        if (!value?.trim()) {
-          error = 'El nombre es obligatorio';
-        } else if (value.length < 2) {
-          error = 'El nombre debe tener al menos 2 caracteres';
-        } else if (value.length > 100) {
-          error = 'El nombre no puede superar los 100 caracteres';
-        }
-        break;
-        
-      case 'email':
-        if (!value?.trim()) {
-          error = 'El email es obligatorio';
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          error = 'Ingrese un email válido';
-        }
-        break;
-        
-      case 'razon_social':
-        if (!value?.trim()) {
-          error = 'La razón social es obligatoria';
-        } else if (value.length < 2) {
-          error = 'La razón social debe tener al menos 2 caracteres';
-        }
-        break;
-        
-      case 'cuit':
-        const cuitClean = value?.replace(/\s/g, '').replace(/-/g, '') || '';
-        if (!cuitClean) {
-          error = 'El CUIT es obligatorio';
-        } else if (!/^\d{11}$/.test(cuitClean)) {
-          error = 'El CUIT debe tener 11 dígitos';
-        }
-        break;
-        
-      case 'telefono':
-        if (!value?.trim()) {
-          error = 'El teléfono es obligatorio';
-        } else if (!/^[\d\s\-\+\(\)]{8,20}$/.test(value)) {
-          error = 'Ingrese un número de teléfono válido';
-        }
-        break;
-        
-      case 'direccion':
-        if (!value?.trim()) {
-          error = 'La dirección es obligatoria';
-        } else if (value.length < 10) {
-          error = 'Ingrese una dirección completa (mínimo 10 caracteres)';
-        }
-        break;
-        
-      case 'descripcion':
-        if (!value?.trim()) {
-          error = 'La descripción es obligatoria';
-        } else if (value.length < 50) {
-          error = 'La descripción debe tener al menos 50 caracteres';
-        } else if (value.length > 2000) {
-          error = 'La descripción no puede superar los 2000 caracteres';
-        }
-        break;
-        
-      case 'password':
-        if (value && value.length < 8) {
-          error = 'La contraseña debe tener al menos 8 caracteres';
-        }
-        break;
-        
-      case 'password_confirmation':
-        if (formData.password && value !== formData.password) {
-          error = 'Las contraseñas no coinciden';
-        }
-        break;
-        
-      case 'sitio_web':
-        if (value && !/^https?:\/\/.+/.test(value)) {
-          error = 'Ingrese una URL válida (debe comenzar con http:// o https://)';
-        }
-        break;
-        
-      case 'linkedin_url':
-        if (value && (!/^https?:\/\/.+/.test(value) || !value.includes('linkedin.com'))) {
-          error = 'Ingrese una URL válida de LinkedIn';
-        }
-        break;
-        
-      case 'empleados_cantidad':
-        if (value && (isNaN(value) || parseInt(value) < 1)) {
-          error = 'Ingrese un número válido de empleados';
-        }
-        break;
-        
-      default:
-        break;
-    }
-
-    setFieldErrors(prev => ({
-      ...prev,
-      [name]: error
-    }));
-
-    return error === '';
-  };
-
-  // Obtener clases CSS para campos con validación
-  const getFieldClasses = (fieldName) => {
-    const baseClass = 'form-control';
-    const hasError = touchedFields[fieldName] && fieldErrors[fieldName];
-    const hasValue = formData[fieldName] && formData[fieldName].toString().trim();
-    
-    if (hasError) {
-      return `${baseClass} is-invalid`;
-    } else if (touchedFields[fieldName] && hasValue) {
-      return `${baseClass} is-valid`;
-    }
-    
-    return baseClass;
-  };
-
-  // Para selects
-  const getSelectClasses = (fieldName) => {
-    const baseClass = 'form-select';
-    const hasError = touchedFields[fieldName] && fieldErrors[fieldName];
-    const hasValue = formData[fieldName] && formData[fieldName].toString().trim();
-    
-    if (hasError) {
-      return `${baseClass} is-invalid`;
-    } else if (touchedFields[fieldName] && hasValue) {
-      return `${baseClass} is-valid`;
-    }
-    
-    return baseClass;
-  };
-
-  // Renderizar feedback de validación
-  const renderFieldFeedback = (fieldName) => {
-    if (touchedFields[fieldName] && fieldErrors[fieldName]) {
-      return <div className="invalid-feedback">{fieldErrors[fieldName]}</div>;
-    } else if (touchedFields[fieldName] && formData[fieldName] && formData[fieldName].toString().trim() && !fieldErrors[fieldName]) {
-      return <div className="valid-feedback">✓ Correcto</div>;
-    }
-    return null;
-  };
-
   const handleInputChange = (e) => {
     const { name, value, type, checked, files } = e.target;
     
@@ -241,9 +91,6 @@ export default function ConfiguracionEmpresa() {
       newValue = checked;
     } else if (type === 'file' && files && files[0]) {
       const file = files[0];
-      
-      // Limpiar errores previos
-      setFieldErrors(prev => ({ ...prev, [name]: '' }));
       
       if (name === 'logo') {
         if (file.size > 2048 * 1024) {
@@ -263,18 +110,10 @@ export default function ConfiguracionEmpresa() {
       newValue = file;
     }
     
-    // Actualizar formData
     setFormData(prev => ({
       ...prev,
       [name]: newValue
     }));
-    
-    // Validar campo después de un breve delay (excepto archivos)
-    if (type !== 'file' && type !== 'checkbox') {
-      setTimeout(() => {
-        validateField(name, newValue);
-      }, 100);
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -441,24 +280,22 @@ export default function ConfiguracionEmpresa() {
                       <input
                         type="text"
                         name="name"
-                        className={getFieldClasses('name')}
+                        className="form-control"
                         value={formData.name}
                         onChange={handleInputChange}
                         required
                       />
-                      {renderFieldFeedback('name')}
                     </div>
                     <div className="col-md-6 mb-3">
                       <label className="form-label fw-semibold">Email</label>
                       <input
                         type="email"
                         name="email"
-                        className={getFieldClasses('email')}
+                        className="form-control"
                         value={formData.email}
                         onChange={handleInputChange}
                         required
                       />
-                      {renderFieldFeedback('email')}
                     </div>
                   </div>
 
@@ -480,23 +317,21 @@ export default function ConfiguracionEmpresa() {
                         <input
                           type="password"
                           name="password"
-                          className={getFieldClasses('password')}
+                          className="form-control"
                           value={formData.password}
                           onChange={handleInputChange}
                           minLength="8"
                         />
-                        {renderFieldFeedback('password')}
                       </div>
                       <div className="col-md-6 mb-3">
                         <label className="form-label fw-semibold">Confirmar Contraseña</label>
                         <input
                           type="password"
                           name="password_confirmation"
-                          className={getFieldClasses('password_confirmation')}
+                          className="form-control"
                           value={formData.password_confirmation}
                           onChange={handleInputChange}
                         />
-                        {renderFieldFeedback('password_confirmation')}
                       </div>
                     </div>
                   )}
@@ -515,25 +350,23 @@ export default function ConfiguracionEmpresa() {
                       <input
                         type="text"
                         name="razon_social"
-                        className={getFieldClasses('razon_social')}
+                        className="form-control"
                         value={formData.razon_social}
                         onChange={handleInputChange}
                         required
                       />
-                      {renderFieldFeedback('razon_social')}
                     </div>
                     <div className="col-md-6 mb-3">
                       <label className="form-label fw-semibold">CUIT</label>
                       <input
                         type="text"
                         name="cuit"
-                        className={getFieldClasses('cuit')}
+                        className="form-control"
                         value={formData.cuit}
                         onChange={handleInputChange}
                         placeholder="20-12345678-9"
                         required
                       />
-                      {renderFieldFeedback('cuit')}
                     </div>
                   </div>
 
@@ -543,18 +376,17 @@ export default function ConfiguracionEmpresa() {
                       <input
                         type="tel"
                         name="telefono"
-                        className={getFieldClasses('telefono')}
+                        className="form-control"
                         value={formData.telefono}
                         onChange={handleInputChange}
                         required
                       />
-                      {renderFieldFeedback('telefono')}
                     </div>
                     <div className="col-md-6 mb-3">
                       <label className="form-label fw-semibold">Sector</label>
                       <select
                         name="sector"
-                        className={getSelectClasses('sector')}
+                        className="form-select"
                         value={formData.sector}
                         onChange={handleInputChange}
                       >
@@ -568,7 +400,6 @@ export default function ConfiguracionEmpresa() {
                         <option value="Servicios">Servicios</option>
                         <option value="Otro">Otro</option>
                       </select>
-                      {renderFieldFeedback('sector')}
                     </div>
                   </div>
 
@@ -577,26 +408,24 @@ export default function ConfiguracionEmpresa() {
                     <input
                       type="text"
                       name="direccion"
-                      className={getFieldClasses('direccion')}
+                      className="form-control"
                       value={formData.direccion}
                       onChange={handleInputChange}
                       required
                     />
-                    {renderFieldFeedback('direccion')}
                   </div>
 
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Descripción de la Empresa</label>
                     <textarea
                       name="descripcion"
-                      className={getFieldClasses('descripcion')}
+                      className="form-control"
                       rows="4"
                       value={formData.descripcion}
                       onChange={handleInputChange}
                       placeholder="Describe tu empresa, sus actividades y valores..."
                       required
                     />
-                    {renderFieldFeedback('descripcion')}
                   </div>
 
                   <div className="row mb-3">
@@ -605,41 +434,40 @@ export default function ConfiguracionEmpresa() {
                       <input
                         type="url"
                         name="sitio_web"
-                        className={getFieldClasses('sitio_web')}
+                        className="form-control"
                         value={formData.sitio_web}
                         onChange={handleInputChange}
                         placeholder="https://..."
                       />
-                      {renderFieldFeedback('sitio_web')}
                     </div>
                     <div className="col-md-6 mb-3">
                       <label className="form-label fw-semibold">LinkedIn</label>
                       <input
                         type="url"
                         name="linkedin_url"
-                        className={getFieldClasses('linkedin_url')}
+                        className="form-control"
                         value={formData.linkedin_url}
                         onChange={handleInputChange}
                         placeholder="https://linkedin.com/company/..."
                       />
-                      {renderFieldFeedback('linkedin_url')}
                     </div>
                   </div>
 
                   <div className="mb-3">
                     <label className="form-label fw-semibold">Cantidad de Empleados</label>
-                    <input
-                      type="number"
+                    <select
                       name="empleados_cantidad"
-                      className={getFieldClasses('empleados_cantidad')}
+                      className="form-select"
                       value={formData.empleados_cantidad}
                       onChange={handleInputChange}
-                      min="1"
-                      max="999999"
-                      placeholder="Ej: 25"
-                    />
-                    {renderFieldFeedback('empleados_cantidad')}
-                    <div className="form-text">Ingrese el número aproximado de empleados de su empresa</div>
+                    >
+                      <option value="">Seleccionar tamaño</option>
+                      <option value="5">1-10 empleados</option>
+                      <option value="30">11-50 empleados</option>
+                      <option value="125">51-200 empleados</option>
+                      <option value="500">201-1000 empleados</option>
+                      <option value="2000">Más de 1000 empleados</option>
+                    </select>
                   </div>
 
                   <div className="mb-4">

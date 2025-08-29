@@ -31,7 +31,7 @@ export default function GestionCandidatos() {
       
       // Filtrar solo las postulaciones de las búsquedas de esta empresa
       const postulacionesEmpresa = todasLasPostulaciones.filter(
-        postulacion => postulacion.busquedaLaboral?.empresa_id === empresa.id
+        postulacion => postulacion.busqueda_laboral?.empresa_id === empresa.id
       );
 
       setPostulaciones(postulacionesEmpresa);
@@ -52,6 +52,17 @@ export default function GestionCandidatos() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Función para ver detalles del candidato
+  const verDetalleCandidato = (candidatoId) => {
+    navigate(`/candidatos/${candidatoId}`);
+  };
+
+  // Función para calificar candidato
+  const calificarCandidato = (postulacionId) => {
+    // Implementar modal de calificación
+    console.log('Calificar postulación:', postulacionId);
   };
 
   const filtrarPostulaciones = () => {
@@ -222,7 +233,10 @@ export default function GestionCandidatos() {
                       <td>
                         <div>
                           <strong>
-                            {postulacion.candidato?.name || 'Sin nombre'}
+                            {postulacion.candidato ? 
+                              `${postulacion.candidato.nombre || ''} ${postulacion.candidato.apellido || ''}`.trim() || 'Sin nombre'
+                              : 'Sin nombre'
+                            }
                           </strong>
                           <div className="small text-muted">
                             {postulacion.candidato?.email || 'Sin email'}
@@ -231,9 +245,9 @@ export default function GestionCandidatos() {
                       </td>
                       <td>
                         <div>
-                          <strong>{postulacion.busquedaLaboral?.titulo}</strong>
+                          <strong>{postulacion.busqueda_laboral?.titulo}</strong>
                           <div className="small text-muted">
-                            {postulacion.busquedaLaboral?.modalidad}
+                            {postulacion.busqueda_laboral?.modalidad}
                           </div>
                         </div>
                       </td>
@@ -262,12 +276,14 @@ export default function GestionCandidatos() {
                           <button 
                             className="btn btn-outline-primary"
                             title="Ver detalles"
+                            onClick={() => verDetalleCandidato(postulacion.candidato?.id)}
                           >
                             <i className="bi bi-eye"></i>
                           </button>
                           <button 
                             className="btn btn-outline-success"
                             title="Calificar"
+                            onClick={() => calificarCandidato(postulacion.id)}
                           >
                             <i className="bi bi-star"></i>
                           </button>

@@ -27,35 +27,43 @@ class UpdateEmpresaRequest extends FormRequest
         return [
             // Campos básicos obligatorios
             'razon_social' => [
-                'sometimes',
+                'required',
                 'string',
                 'min:3',
                 'max:255',
                 'unique:empresas,razon_social,' . $empresaId
             ],
             'cuit' => [
-                'sometimes',
+                'required',
                 'string',
                 new CuitArgentino(),
                 'unique:empresas,cuit,' . $empresaId
             ],
             
-            // Información de contacto
+            // Información de contacto obligatoria
             'telefono' => [
-                'sometimes',
-                'nullable',
+                'required',
                 'string',
                 'regex:/^[\d\s\-\+\(\)]+$/',
                 'min:8',
                 'max:20'
             ],
             'direccion' => [
-                'sometimes',
-                'nullable',
+                'required',
                 'string',
                 'min:10',
                 'max:255'
             ],
+            
+            // Descripción obligatoria
+            'descripcion' => [
+                'required',
+                'string',
+                'min:50',
+                'max:2000'
+            ],
+            
+            // Información de contacto opcional
             'email_contacto' => [
                 'sometimes',
                 'nullable',
@@ -70,21 +78,14 @@ class UpdateEmpresaRequest extends FormRequest
                 'max:255'
             ],
             
-            // Descripción e información corporativa
-            'descripcion' => [
-                'sometimes',
-                'nullable',
-                'string',
-                'min:50',
-                'max:2000'
-            ],
+            // Información corporativa opcional
             'sector' => [
                 'sometimes',
                 'nullable',
                 'string',
                 'max:100'
             ],
-            'tamaño_empresa' => [
+            'empleados_cantidad' => [
                 'sometimes',
                 'nullable',
                 'integer',
@@ -161,17 +162,20 @@ class UpdateEmpresaRequest extends FormRequest
             'cuit.required' => 'El CUIT es obligatorio',
             'cuit.unique' => 'Este CUIT ya está registrado',
             
+            'telefono.required' => 'El teléfono es obligatorio',
             'telefono.regex' => 'El formato del teléfono no es válido',
             'telefono.min' => 'El teléfono debe tener al menos 8 caracteres',
             
+            'direccion.required' => 'La dirección es obligatoria',
             'direccion.min' => 'La dirección debe ser más específica (mínimo 10 caracteres)',
             
-            'email_contacto.email' => 'Ingrese un email de contacto válido',
-            
+            'descripcion.required' => 'La descripción de la empresa es obligatoria',
             'descripcion.min' => 'La descripción debe tener al menos 50 caracteres',
             'descripcion.max' => 'La descripción no puede superar los 2000 caracteres',
             
-            'tamaño_empresa.min' => 'El tamaño de empresa debe ser mayor a 0',
+            'email_contacto.email' => 'Ingrese un email de contacto válido',
+            
+            'empleados_cantidad.min' => 'El número de empleados debe ser mayor a 0',
             
             'año_fundacion.min' => 'El año de fundación no puede ser anterior a 1800',
             'año_fundacion.max' => 'El año de fundación no puede ser futuro',
@@ -183,7 +187,15 @@ class UpdateEmpresaRequest extends FormRequest
             
             'logo.image' => 'El logo debe ser una imagen',
             'logo.mimes' => 'El logo debe ser JPG, PNG o GIF',
-            'logo.max' => 'El logo no puede superar los 2MB'
+            'logo.max' => 'El logo no puede superar los 2MB',
+            
+            // Campos de usuario
+            'user_name.required' => 'El nombre de usuario es obligatorio',
+            'user_name.min' => 'El nombre debe tener al menos 2 caracteres',
+            'user_email.required' => 'El email es obligatorio',
+            'user_email.email' => 'Ingrese un email válido',
+            'password.min' => 'La contraseña debe tener al menos 8 caracteres',
+            'password_confirmation.same' => 'La confirmación de contraseña no coincide'
         ];
     }
 

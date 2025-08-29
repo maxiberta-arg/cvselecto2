@@ -24,27 +24,41 @@ export default function EmpresaDashboard() {
     const cargarEstadisticas = async () => {
       try {
         setLoading(true);
+        console.log('Cargando estadísticas para usuario:', user.id);
         
         // Cargar datos de la empresa
         const empresaResponse = await api.get(`/empresas/by-user/${user.id}`);
         const empresa = empresaResponse.data;
+        console.log('Datos de empresa cargados:', empresa);
 
         // Cargar búsquedas de la empresa
         const busquedasResponse = await api.get('/busquedas-laborales');
         const todasLasBusquedas = busquedasResponse.data;
         const busquedasEmpresa = todasLasBusquedas.filter(b => b.empresa_id === empresa.id);
+        console.log('Búsquedas de la empresa:', busquedasEmpresa);
 
-        // Cargar postulaciones
+        // Cargar postulaciones relacionadas
         const postulacionesResponse = await api.get('/postulaciones');
         const todasLasPostulaciones = postulacionesResponse.data;
+        console.log('Total de postulaciones en sistema:', todasLasPostulaciones.length);
+        
         const postulacionesEmpresa = todasLasPostulaciones.filter(
           p => busquedasEmpresa.find(b => b.id === p.busqueda_id)
         );
+        console.log('Postulaciones para la empresa:', postulacionesEmpresa);
 
         // Calcular estadísticas reales
         const busquedasActivas = busquedasEmpresa.filter(b => b.estado === 'activa').length;
         const candidatosUnicos = new Set(postulacionesEmpresa.map(p => p.candidato_id)).size;
         const postulacionesPendientes = postulacionesEmpresa.filter(p => p.estado === 'postulado').length;
+        
+        console.log('Estadísticas calculadas:', {
+          busquedasActivas,
+          candidatosUnicos,
+          postulacionesPendientes,
+          totalBusquedas: busquedasEmpresa.length,
+          totalPostulaciones: postulacionesEmpresa.length
+        });
         
         setStats({
           busquedasActivas,
@@ -70,7 +84,7 @@ export default function EmpresaDashboard() {
   }, [user?.id]);
 
   // Handlers de navegación
-  const navegarAPerfil = () => navigate('/perfil-empresa');
+  const navegarAPerfil = () => navigate('/configuracion-empresa');
   const navegarABusquedas = () => navigate('/mis-busquedas-laborales');
   const navegarACandidatos = () => navigate('/gestion-candidatos');
   const crearBusqueda = () => navigate('/crear-busqueda-laboral');
@@ -245,10 +259,10 @@ export default function EmpresaDashboard() {
                   <div className="col-md-6 mb-2">
                     <button 
                       className="btn btn-success btn-lg w-100"
-                      onClick={() => navigate('/mis-busquedas-laborales')}
-                      title="Ve a tus búsquedas para agregar candidatos manualmente"
+                      onClick={() => navigate('/gestion-candidatos')}
+                      title="Gestiona todos los candidatos que se han postulado a tus búsquedas"
                     >
-                      <i className="bi bi-person-plus me-2"></i>
+                      <i className="bi bi-people me-2"></i>
                       Gestionar Candidatos
                     </button>
                   </div>

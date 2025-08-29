@@ -33,10 +33,10 @@ export default function Navbar() {
   // Secciones con iconos y color activo para empresa
   const empresaSections = [
     { to: '/empresa', label: 'Dashboard', icon: 'bi bi-building' },
-    { to: '/perfil-empresa', label: 'Perfil Empresa', icon: 'bi bi-person-badge' },
-    { to: '/busquedas', label: 'Búsquedas', icon: 'bi bi-clipboard-plus' },
-    { to: '/candidatos', label: 'Candidatos', icon: 'bi bi-people-fill' },
-    { to: '/entrevistas', label: 'Entrevistas', icon: 'bi bi-calendar-check' },
+    { to: '/configuracion-empresa', label: 'Configuración', icon: 'bi bi-gear' },
+    { to: '/mis-busquedas-laborales', label: 'Búsquedas', icon: 'bi bi-clipboard-plus' },
+    { to: '/gestion-candidatos', label: 'Candidatos', icon: 'bi bi-people-fill' },
+    { to: '/reportes-empresa', label: 'Reportes', icon: 'bi bi-bar-chart' }
   ];
   // Secciones con iconos y color activo para candidato
   const candidatoSections = [

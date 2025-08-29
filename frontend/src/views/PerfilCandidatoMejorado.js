@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 export default function PerfilCandidatoMejorado() {
   const { user, updateUserInfo } = useAuth();
+  const { id: candidatoId } = useParams(); // ID del candidato desde la URL
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -12,6 +14,7 @@ export default function PerfilCandidatoMejorado() {
   const [showPasswordFields, setShowPasswordFields] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [touchedFields, setTouchedFields] = useState({});
+  const [isOwnProfile, setIsOwnProfile] = useState(false); // Indica si es el perfil propio
 
   const [formData, setFormData] = useState({
     // Datos del usuario (tabla users)
@@ -40,13 +43,24 @@ export default function PerfilCandidatoMejorado() {
   // Cargar datos del candidato al montar
   useEffect(() => {
     const loadCandidatoData = async () => {
-      if (!user?.id) return;
-      
       try {
         setLoading(true);
         setError(null);
         
-        const response = await api.get(`/candidatos/by-user/${user.id}`);
+        let response;
+        if (candidatoId) {
+          // Viendo perfil de otro candidato
+          response = await api.get(`/candidatos/${candidatoId}`);
+          setIsOwnProfile(false);
+          setEditMode(false); // No permitir edición de otros perfiles
+        } else if (user?.id) {
+          // Viendo perfil propio
+          response = await api.get(`/candidatos/by-user/${user.id}`);
+          setIsOwnProfile(true);
+        } else {
+          return;
+        }
+        
         const candidato = response.data;
         
         const userData = {
@@ -87,7 +101,7 @@ export default function PerfilCandidatoMejorado() {
     };
 
     loadCandidatoData();
-  }, [user?.id]);
+  }, [user?.id, candidatoId]);
 
   // Función para recargar datos después de guardar
   const reloadData = async () => {
@@ -960,18 +974,19 @@ export default function PerfilCandidatoMejorado() {
 
                   </div>
 
-                  {/* Botones de acción */}
-                  <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                    {!editMode ? (
-                      <button 
-                        type="button" 
-                        className="btn btn-primary px-4"
-                        onClick={() => setEditMode(true)}
-                      >
-                        <i className="bi bi-pencil me-2"></i>
-                        Editar Perfil
-                      </button>
-                    ) : (
+                  {/* Botones de acción - Solo para perfil propio */}
+                  {isOwnProfile && (
+                    <div className="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                      {!editMode ? (
+                        <button 
+                          type="button" 
+                          className="btn btn-primary px-4"
+                          onClick={() => setEditMode(true)}
+                        >
+                          <i className="bi bi-pencil me-2"></i>
+                          Editar Perfil
+                        </button>
+                      ) : (
                       <>
                         <button 
                           type="button" 
@@ -1003,7 +1018,8 @@ export default function PerfilCandidatoMejorado() {
                         </button>
                       </>
                     )}
-                  </div>
+                    </div>
+                  )}
                 </form>
 
               </div>

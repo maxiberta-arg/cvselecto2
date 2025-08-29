@@ -418,32 +418,61 @@ export default function PerfilEmpresaMejorado() {
     setError(null);
     setSuccess(null);
     
+    let formDataToSend = null;
+    
     try {
-      const formDataToSend = new FormData();
+      formDataToSend = new FormData();
       
-      // Datos del usuario
-      formDataToSend.append('user_name', formData.name);
-      formDataToSend.append('user_email', formData.email);
-      if (formData.password) {
-        formDataToSend.append('password', formData.password);
-        formDataToSend.append('password_confirmation', formData.password_confirmation);
+      // Validar que los campos obligatorios no estén vacíos antes de enviar
+      const requiredFieldsToCheck = ['name', 'email', 'razon_social', 'cuit', 'telefono', 'direccion', 'descripcion'];
+      const missingFields = [];
+      
+      requiredFieldsToCheck.forEach(field => {
+        if (!formData[field] || !formData[field].toString().trim()) {
+          missingFields.push(field);
+        }
+      });
+      
+      if (missingFields.length > 0) {
+        console.error('Campos obligatorios faltantes:', missingFields);
+        setError(`Los siguientes campos son obligatorios: ${missingFields.join(', ')}`);
+        return;
       }
       
-      // Datos de la empresa
-      formDataToSend.append('razon_social', formData.razon_social);
-      formDataToSend.append('cuit', formData.cuit.replace(/\s/g, ''));
-      formDataToSend.append('telefono', formData.telefono);
-      formDataToSend.append('direccion', formData.direccion);
-      formDataToSend.append('descripcion', formData.descripcion);
-      formDataToSend.append('sector', formData.sector);
+      // Datos del usuario - asegurar que no estén vacíos
+      if (formData.name && formData.name.trim()) {
+        formDataToSend.append('user_name', formData.name.trim());
+      }
+      if (formData.email && formData.email.trim()) {
+        formDataToSend.append('user_email', formData.email.trim());
+      }
       
-      // Campos opcionales
-      if (formData.tamaño_empresa) formDataToSend.append('tamaño_empresa', formData.tamaño_empresa);
-      if (formData.año_fundacion) formDataToSend.append('año_fundacion', formData.año_fundacion);
-      if (formData.email_contacto) formDataToSend.append('email_contacto', formData.email_contacto);
-      if (formData.persona_contacto) formDataToSend.append('persona_contacto', formData.persona_contacto);
-      if (formData.sitio_web) formDataToSend.append('sitio_web', formData.sitio_web);
-      if (formData.linkedin_url) formDataToSend.append('linkedin_url', formData.linkedin_url);
+      // Solo incluir contraseña si se está cambiando
+      if (formData.password && formData.password.trim()) {
+        formDataToSend.append('password', formData.password);
+        formDataToSend.append('password_confirmation', formData.password_confirmation || '');
+      }
+      
+      // Datos de la empresa - campos obligatorios
+      formDataToSend.append('razon_social', formData.razon_social.trim());
+      formDataToSend.append('cuit', formData.cuit.replace(/\s/g, '').replace(/-/g, '')); // Limpiar formato
+      formDataToSend.append('telefono', formData.telefono.trim());
+      formDataToSend.append('direccion', formData.direccion.trim());
+      formDataToSend.append('descripcion', formData.descripcion.trim());
+      
+      // Campos opcionales - solo incluir si tienen valor
+      if (formData.sector && formData.sector.trim()) {
+        formDataToSend.append('sector', formData.sector.trim());
+      }
+      if (formData.empleados_cantidad && formData.empleados_cantidad.toString().trim()) {
+        formDataToSend.append('empleados_cantidad', formData.empleados_cantidad.toString());
+      }
+      if (formData.sitio_web && formData.sitio_web.trim()) {
+        formDataToSend.append('sitio_web', formData.sitio_web.trim());
+      }
+      if (formData.linkedin_url && formData.linkedin_url.trim()) {
+        formDataToSend.append('linkedin_url', formData.linkedin_url.trim());
+      }
       
       // Archivo de logo
       if (formData.logo && typeof formData.logo === 'object') {
@@ -483,10 +512,16 @@ export default function PerfilEmpresaMejorado() {
       
     } catch (err) {
       console.error('Error al guardar:', err);
+      console.error('Respuesta completa del error:', err.response);
+      if (formDataToSend) {
+        console.error('Datos que se enviaron:', Object.fromEntries(formDataToSend.entries()));
+      }
       
       if (err.response?.status === 422) {
         const validationErrors = err.response.data.errors || {};
         const newErrors = {};
+        
+        console.error('Errores de validación del servidor:', validationErrors);
         
         // Mapear errores del backend a campos del frontend
         Object.keys(validationErrors).forEach(key => {
@@ -496,7 +531,19 @@ export default function PerfilEmpresaMejorado() {
         });
         
         setFieldErrors(newErrors);
-        setError('Por favor corrige los errores marcados en el formulario');
+        
+        // Mostrar errores específicos en el mensaje principal
+        const errorMessages = Object.values(validationErrors).flat();
+        setError(
+          <div>
+            <strong>Errores de validación:</strong>
+            <ul className="mb-0 mt-2">
+              {errorMessages.map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
+          </div>
+        );
       } else if (err.response?.status === 404) {
         setError('No se encontró la empresa. Contacte al administrador.');
       } else if (err.response?.status === 403) {
