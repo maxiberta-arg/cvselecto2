@@ -11,7 +11,9 @@ export default function BusquedaDetalle() {
   const [postulaciones, setPostulaciones] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
   const [filtroEstado, setFiltroEstado] = useState('todas');
+  const [actionLoading, setActionLoading] = useState(null);
 
   useEffect(() => {
     cargarDatos();
@@ -45,6 +47,69 @@ export default function BusquedaDetalle() {
     }
   };
 
+  // Función para cambiar estado de postulación
+  const cambiarEstadoPostulacion = async (postulacionId, nuevoEstado) => {
+    try {
+      setActionLoading(postulacionId);
+      setError(null);
+      
+      await api.put(`/postulaciones/${postulacionId}`, { 
+        estado: nuevoEstado 
+      });
+      
+      // Actualizar estado local
+      setPostulaciones(prev => prev.map(postulacion => 
+        postulacion.id === postulacionId 
+          ? { ...postulacion, estado: nuevoEstado }
+          : postulacion
+      ));
+      
+      setSuccess(`Postulación ${nuevoEstado === 'seleccionado' ? 'aceptada' : nuevoEstado} correctamente`);
+      setTimeout(() => setSuccess(null), 3000);
+      
+    } catch (err) {
+      console.error('Error al cambiar estado:', err);
+      setError('Error al cambiar el estado de la postulación');
+      setTimeout(() => setError(null), 5000);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Función para calificar candidato
+  const calificarCandidato = async (postulacionId, puntuacion, notas = '') => {
+    try {
+      setActionLoading(postulacionId);
+      setError(null);
+      
+      await api.put(`/postulaciones/${postulacionId}`, { 
+        puntuacion: puntuacion,
+        notas_empresa: notas
+      });
+      
+      // Actualizar datos locales
+      setPostulaciones(prev => prev.map(postulacion => 
+        postulacion.id === postulacionId 
+          ? { 
+              ...postulacion, 
+              puntuacion: puntuacion,
+              notas_empresa: notas 
+            }
+          : postulacion
+      ));
+      
+      setSuccess(`Candidato calificado con ${puntuacion}/10`);
+      setTimeout(() => setSuccess(null), 3000);
+      
+    } catch (err) {
+      console.error('Error al calificar:', err);
+      setError('Error al calificar el candidato');
+      setTimeout(() => setError(null), 5000);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const formatearFecha = (fecha) => {
     return new Date(fecha).toLocaleDateString('es-ES', {
       day: 'numeric',
@@ -64,6 +129,11 @@ export default function BusquedaDetalle() {
 
   const getEstadoPostulacion = (estado) => {
     switch(estado) {
+      case 'postulado': return { class: 'bg-warning text-dark', text: 'Postulado' };
+      case 'en proceso': return { class: 'bg-info text-white', text: 'En Proceso' };
+      case 'seleccionado': return { class: 'bg-success text-white', text: 'Seleccionado' };
+      case 'rechazado': return { class: 'bg-danger text-white', text: 'Rechazado' };
+      // Estados adicionales por compatibilidad
       case 'pendiente': return { class: 'bg-warning text-dark', text: 'Pendiente' };
       case 'revisada': return { class: 'bg-info text-white', text: 'Revisada' };
       case 'aceptada': return { class: 'bg-success text-white', text: 'Aceptada' };
@@ -123,6 +193,20 @@ export default function BusquedaDetalle() {
     <div className="container-fluid py-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
       <div className="container">
         
+        {/* Mensaje de éxito */}
+        {success && (
+          <div className="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            <i className="bi bi-check-circle-fill me-2"></i>
+            {success}
+            <button 
+              type="button" 
+              className="btn-close" 
+              onClick={() => setSuccess('')}
+              aria-label="Close"
+            ></button>
+          </div>
+        )}
+
         {/* Header */}
         <div className="row mb-4">
           <div className="col-12">
@@ -252,10 +336,10 @@ export default function BusquedaDetalle() {
                     onChange={(e) => setFiltroEstado(e.target.value)}
                   >
                     <option value="todas">Todas las postulaciones</option>
-                    <option value="pendiente">Pendientes</option>
-                    <option value="revisada">Revisadas</option>
-                    <option value="aceptada">Aceptadas</option>
-                    <option value="rechazada">Rechazadas</option>
+                    <option value="postulado">Postulados</option>
+                    <option value="en proceso">En Proceso</option>
+                    <option value="seleccionado">Seleccionados</option>
+                    <option value="rechazado">Rechazados</option>
                   </select>
                 </div>
 
@@ -263,26 +347,26 @@ export default function BusquedaDetalle() {
                 <div className="row mb-4">
                   <div className="col-md-3">
                     <div className="text-center p-3 bg-warning bg-opacity-10 rounded">
-                      <div className="fw-bold text-warning h4">{postulaciones.filter(p => p.estado === 'pendiente').length}</div>
-                      <small className="text-muted">Pendientes</small>
+                      <div className="fw-bold text-warning h4">{postulaciones.filter(p => p.estado === 'postulado').length}</div>
+                      <small className="text-muted">Postulados</small>
                     </div>
                   </div>
                   <div className="col-md-3">
                     <div className="text-center p-3 bg-info bg-opacity-10 rounded">
-                      <div className="fw-bold text-info h4">{postulaciones.filter(p => p.estado === 'revisada').length}</div>
-                      <small className="text-muted">Revisadas</small>
+                      <div className="fw-bold text-info h4">{postulaciones.filter(p => p.estado === 'en proceso').length}</div>
+                      <small className="text-muted">En Proceso</small>
                     </div>
                   </div>
                   <div className="col-md-3">
                     <div className="text-center p-3 bg-success bg-opacity-10 rounded">
-                      <div className="fw-bold text-success h4">{postulaciones.filter(p => p.estado === 'aceptada').length}</div>
-                      <small className="text-muted">Aceptadas</small>
+                      <div className="fw-bold text-success h4">{postulaciones.filter(p => p.estado === 'seleccionado').length}</div>
+                      <small className="text-muted">Seleccionados</small>
                     </div>
                   </div>
                   <div className="col-md-3">
                     <div className="text-center p-3 bg-danger bg-opacity-10 rounded">
-                      <div className="fw-bold text-danger h4">{postulaciones.filter(p => p.estado === 'rechazada').length}</div>
-                      <small className="text-muted">Rechazadas</small>
+                      <div className="fw-bold text-danger h4">{postulaciones.filter(p => p.estado === 'rechazado').length}</div>
+                      <small className="text-muted">Rechazados</small>
                     </div>
                   </div>
                 </div>
@@ -319,6 +403,27 @@ export default function BusquedaDetalle() {
                                       <i className="bi bi-calendar me-1"></i>
                                       Postulado: {formatearFecha(postulacion.created_at)}
                                     </small>
+                                    
+                                    {/* Información de calificación */}
+                                    {postulacion.puntuacion && (
+                                      <div className="mt-1">
+                                        <small className="text-warning">
+                                          <i className="bi bi-star-fill me-1"></i>
+                                          Puntuación: {postulacion.puntuacion}/10
+                                        </small>
+                                      </div>
+                                    )}
+                                    
+                                    {postulacion.notas_empresa && (
+                                      <div className="mt-1">
+                                        <small className="text-muted">
+                                          <i className="bi bi-note-text me-1"></i>
+                                          Notas: {postulacion.notas_empresa.length > 50 
+                                            ? postulacion.notas_empresa.substring(0, 50) + '...' 
+                                            : postulacion.notas_empresa}
+                                        </small>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                                 
@@ -326,6 +431,62 @@ export default function BusquedaDetalle() {
                                   <span className={`badge px-3 py-2 ${estadoInfo.class}`}>
                                     {estadoInfo.text}
                                   </span>
+                                  
+                                  {/* Botones de acción directos */}
+                                  <div className="btn-group" role="group">
+                                    {postulacion.estado === 'postulado' && (
+                                      <button 
+                                        className="btn btn-outline-info btn-sm" 
+                                        onClick={() => cambiarEstadoPostulacion(postulacion.id, 'en proceso')}
+                                        disabled={actionLoading}
+                                        title="Marcar en proceso"
+                                      >
+                                        <i className="bi bi-hourglass-split"></i>
+                                      </button>
+                                    )}
+                                    
+                                    {(postulacion.estado === 'postulado' || postulacion.estado === 'en proceso') && (
+                                      <>
+                                        <button 
+                                          className="btn btn-outline-success btn-sm" 
+                                          onClick={() => cambiarEstadoPostulacion(postulacion.id, 'seleccionado')}
+                                          disabled={actionLoading}
+                                          title="Seleccionar candidato"
+                                        >
+                                          <i className="bi bi-check-circle"></i>
+                                        </button>
+                                        <button 
+                                          className="btn btn-outline-danger btn-sm" 
+                                          onClick={() => cambiarEstadoPostulacion(postulacion.id, 'rechazado')}
+                                          disabled={actionLoading}
+                                          title="Rechazar candidato"
+                                        >
+                                          <i className="bi bi-x-circle"></i>
+                                        </button>
+                                      </>
+                                    )}
+                                    
+                                    <button 
+                                      className="btn btn-outline-warning btn-sm" 
+                                      onClick={() => {
+                                        const puntuacion = prompt('Puntuación (1-10):', postulacion.puntuacion || '');
+                                        const notas = prompt('Notas adicionales:', postulacion.notas_empresa || '');
+                                        if (puntuacion !== null && notas !== null && puntuacion.trim() !== '') {
+                                          const puntuacionNum = parseInt(puntuacion);
+                                          if (puntuacionNum >= 1 && puntuacionNum <= 10) {
+                                            calificarCandidato(postulacion.id, puntuacionNum, notas);
+                                          } else {
+                                            alert('La puntuación debe ser entre 1 y 10');
+                                          }
+                                        }
+                                      }}
+                                      disabled={actionLoading}
+                                      title="Calificar candidato"
+                                    >
+                                      <i className="bi bi-star"></i>
+                                    </button>
+                                  </div>
+                                  
                                   <button 
                                     className="btn btn-outline-primary btn-sm"
                                     onClick={() => navigate(`/candidatos/${postulacion.candidato.id}`)}

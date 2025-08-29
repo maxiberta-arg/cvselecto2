@@ -11,6 +11,8 @@ export default function GestionCandidatos() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filtroEstado, setFiltroEstado] = useState('todos');
+  const [success, setSuccess] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     cargarDatos();
@@ -54,15 +56,68 @@ export default function GestionCandidatos() {
     }
   };
 
+  // Función para cambiar estado de postulación
+  const cambiarEstadoPostulacion = async (postulacionId, nuevoEstado) => {
+    try {
+      setActionLoading(true);
+      setError(null);
+
+      const response = await api.put(`/postulaciones/${postulacionId}`, {
+        estado: nuevoEstado
+      });
+
+      if (response.data) {
+        // Actualizar localmente
+        setPostulaciones(prev => prev.map(p => 
+          p.id === postulacionId 
+            ? { ...p, estado: nuevoEstado }
+            : p
+        ));
+
+        setSuccess(`Estado cambiado a "${nuevoEstado}" exitosamente`);
+        setTimeout(() => setSuccess(''), 3000);
+      }
+    } catch (err) {
+      console.error('Error al cambiar estado:', err);
+      setError('Error al cambiar el estado de la postulación');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Función para calificar candidato con puntuación y notas
+  const calificarCandidato = async (postulacionId, puntuacion, notas) => {
+    try {
+      setActionLoading(true);
+      setError(null);
+
+      const response = await api.put(`/postulaciones/${postulacionId}`, {
+        puntuacion: puntuacion,
+        notas_empresa: notas
+      });
+
+      if (response.data) {
+        // Actualizar localmente
+        setPostulaciones(prev => prev.map(p => 
+          p.id === postulacionId 
+            ? { ...p, puntuacion: puntuacion, notas_empresa: notas }
+            : p
+        ));
+
+        setSuccess('Candidato calificado exitosamente');
+        setTimeout(() => setSuccess(''), 3000);
+      }
+    } catch (err) {
+      console.error('Error al calificar:', err);
+      setError('Error al calificar el candidato');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // Función para ver detalles del candidato
   const verDetalleCandidato = (candidatoId) => {
     navigate(`/candidatos/${candidatoId}`);
-  };
-
-  // Función para calificar candidato
-  const calificarCandidato = (postulacionId) => {
-    // Implementar modal de calificación
-    console.log('Calificar postulación:', postulacionId);
   };
 
   const filtrarPostulaciones = () => {
@@ -103,6 +158,20 @@ export default function GestionCandidatos() {
           Volver al Dashboard
         </button>
       </div>
+
+      {/* Mensaje de éxito */}
+      {success && (
+        <div className="alert alert-success alert-dismissible fade show mb-4" role="alert">
+          <i className="bi bi-check-circle-fill me-2"></i>
+          {success}
+          <button 
+            type="button" 
+            className="btn-close" 
+            onClick={() => setSuccess('')}
+            aria-label="Close"
+          ></button>
+        </div>
+      )}
 
       {error && (
         <div className="alert alert-danger" role="alert">
@@ -224,6 +293,7 @@ export default function GestionCandidatos() {
                     <th>Estado</th>
                     <th>Fecha</th>
                     <th>Puntuación</th>
+                    <th>Notas</th>
                     <th>Acciones</th>
                   </tr>
                 </thead>
@@ -245,7 +315,14 @@ export default function GestionCandidatos() {
                       </td>
                       <td>
                         <div>
-                          <strong>{postulacion.busqueda_laboral?.titulo}</strong>
+                          <strong 
+                            className="text-primary" 
+                            style={{cursor: 'pointer'}}
+                            onClick={() => navigate(`/busqueda-detalle/${postulacion.busqueda_laboral?.id}`)}
+                            title="Ver detalles de la búsqueda"
+                          >
+                            {postulacion.busqueda_laboral?.titulo}
+                          </strong>
                           <div className="small text-muted">
                             {postulacion.busqueda_laboral?.modalidad}
                           </div>
@@ -272,20 +349,79 @@ export default function GestionCandidatos() {
                         )}
                       </td>
                       <td>
+                        {postulacion.notas_empresa ? (
+                          <small className="text-muted" title={postulacion.notas_empresa}>
+                            {postulacion.notas_empresa.length > 30 
+                              ? postulacion.notas_empresa.substring(0, 30) + '...' 
+                              : postulacion.notas_empresa}
+                          </small>
+                        ) : (
+                          <span className="text-muted">Sin notas</span>
+                        )}
+                      </td>
+                      <td>
                         <div className="btn-group btn-group-sm">
+                          {/* Botones de cambio de estado */}
+                          {postulacion.estado === 'postulado' && (
+                            <button 
+                              className="btn btn-outline-info"
+                              title="Marcar en proceso"
+                              onClick={() => cambiarEstadoPostulacion(postulacion.id, 'en proceso')}
+                              disabled={actionLoading}
+                            >
+                              <i className="bi bi-hourglass-split"></i>
+                            </button>
+                          )}
+                          
+                          {(postulacion.estado === 'postulado' || postulacion.estado === 'en proceso') && (
+                            <>
+                              <button 
+                                className="btn btn-outline-success"
+                                title="Seleccionar candidato"
+                                onClick={() => cambiarEstadoPostulacion(postulacion.id, 'seleccionado')}
+                                disabled={actionLoading}
+                              >
+                                <i className="bi bi-check-circle"></i>
+                              </button>
+                              <button 
+                                className="btn btn-outline-danger"
+                                title="Rechazar candidato"
+                                onClick={() => cambiarEstadoPostulacion(postulacion.id, 'rechazado')}
+                                disabled={actionLoading}
+                              >
+                                <i className="bi bi-x-circle"></i>
+                              </button>
+                            </>
+                          )}
+                          
+                          {/* Botón de calificación */}
+                          <button 
+                            className="btn btn-outline-warning"
+                            title="Calificar candidato"
+                            onClick={() => {
+                              const puntuacion = prompt('Puntuación (1-10):', postulacion.puntuacion || '');
+                              const notas = prompt('Notas adicionales:', postulacion.notas_empresa || '');
+                              if (puntuacion !== null && notas !== null && puntuacion.trim() !== '') {
+                                const puntuacionNum = parseInt(puntuacion);
+                                if (puntuacionNum >= 1 && puntuacionNum <= 10) {
+                                  calificarCandidato(postulacion.id, puntuacionNum, notas);
+                                } else {
+                                  alert('La puntuación debe ser entre 1 y 10');
+                                }
+                              }
+                            }}
+                            disabled={actionLoading}
+                          >
+                            <i className="bi bi-star"></i>
+                          </button>
+                          
+                          {/* Botón de ver detalles */}
                           <button 
                             className="btn btn-outline-primary"
-                            title="Ver detalles"
+                            title="Ver detalles del candidato"
                             onClick={() => verDetalleCandidato(postulacion.candidato?.id)}
                           >
                             <i className="bi bi-eye"></i>
-                          </button>
-                          <button 
-                            className="btn btn-outline-success"
-                            title="Calificar"
-                            onClick={() => calificarCandidato(postulacion.id)}
-                          >
-                            <i className="bi bi-star"></i>
                           </button>
                         </div>
                       </td>
