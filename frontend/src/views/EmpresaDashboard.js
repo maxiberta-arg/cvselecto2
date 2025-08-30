@@ -38,7 +38,7 @@ export default function EmpresaDashboard() {
         console.log('Búsquedas de la empresa:', busquedasEmpresa);
 
         // Cargar postulaciones relacionadas
-        const postulacionesResponse = await api.get('/postulaciones');
+        const postulacionesResponse = await api.get(`/postulaciones`);
         const todasLasPostulaciones = postulacionesResponse.data;
         console.log('Total de postulaciones en sistema:', todasLasPostulaciones.length);
         
@@ -268,16 +268,26 @@ export default function EmpresaDashboard() {
                   </div>
                 </div>
                 <div className="row mt-2">
-                  <div className="col-md-6">
+                  <div className="col-md-4">
                     <button 
                       className="btn btn-info btn-lg w-100"
+                      onClick={() => navigate('/busqueda-candidatos')}
+                      title="Buscar candidatos con filtros avanzados"
+                    >
+                      <i className="bi bi-search me-2"></i>
+                      Buscar Candidatos
+                    </button>
+                  </div>
+                  <div className="col-md-4">
+                    <button 
+                      className="btn btn-secondary btn-lg w-100"
                       onClick={() => navigate('/reportes-empresa')}
                     >
                       <i className="bi bi-graph-up me-2"></i>
                       Ver Reportes
                     </button>
                   </div>
-                  <div className="col-md-6">
+                  <div className="col-md-4">
                     <button 
                       className="btn btn-warning btn-lg w-100"
                       onClick={() => navigate('/configuracion-empresa')}

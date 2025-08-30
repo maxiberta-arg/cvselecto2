@@ -19,6 +19,17 @@ class BusquedaLaboral extends Model
         'titulo',
         'descripcion',
         'requisitos',
+        'beneficios',
+        'salario_min',
+        'salario_max',
+        'moneda',
+        'modalidad',
+        'ubicacion',
+        'experiencia_requerida',
+        'nivel_educativo',
+        'idiomas',
+        'tipo_contrato',
+        'jornada_laboral',
         'estado',
         'fecha_publicacion',
         'fecha_cierre'
@@ -28,6 +39,9 @@ class BusquedaLaboral extends Model
     protected $casts = [
         'fecha_publicacion' => 'date',
         'fecha_cierre' => 'date',
+        'salario_min' => 'decimal:2',
+        'salario_max' => 'decimal:2',
+        'experiencia_requerida' => 'integer'
     ];
 
     // Relación muchos a uno con Empresa

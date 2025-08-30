@@ -29,6 +29,12 @@ class Postulacion extends Model
         return $this->belongsTo(BusquedaLaboral::class, 'busqueda_id');
     }
 
+    // También crear un alias para mantener compatibilidad
+    public function busqueda()
+    {
+        return $this->busquedaLaboral();
+    }
+
     // Relación muchos a uno con Candidato
     public function candidato()
     {

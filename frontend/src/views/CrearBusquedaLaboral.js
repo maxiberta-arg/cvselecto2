@@ -19,6 +19,17 @@ export default function CrearBusquedaLaboral() {
     titulo: '',
     descripcion: '',
     requisitos: '',
+    beneficios: '',
+    salario_min: '',
+    salario_max: '',
+    moneda: 'ARS',
+    modalidad: '',
+    ubicacion: '',
+    experiencia_requerida: '',
+    nivel_educativo: '',
+    idiomas: '',
+    tipo_contrato: '',
+    jornada_laboral: '',
     estado: 'abierta',
     fecha_publicacion: new Date().toISOString().split('T')[0], // Fecha actual por defecto
     fecha_cierre: ''
@@ -100,6 +111,32 @@ export default function CrearBusquedaLaboral() {
 
     if (formData.requisitos && formData.requisitos.length > 2000) {
       errors.requisitos = 'Los requisitos no pueden exceder 2000 caracteres';
+    }
+
+    // Validación de salarios
+    if (formData.salario_min && formData.salario_max) {
+      const salarioMin = parseFloat(formData.salario_min);
+      const salarioMax = parseFloat(formData.salario_max);
+      
+      if (salarioMin <= 0) {
+        errors.salario_min = 'El salario mínimo debe ser mayor a 0';
+      }
+      
+      if (salarioMax <= 0) {
+        errors.salario_max = 'El salario máximo debe ser mayor a 0';
+      }
+      
+      if (salarioMin >= salarioMax) {
+        errors.salario_max = 'El salario máximo debe ser mayor al mínimo';
+      }
+    }
+
+    // Validación de experiencia
+    if (formData.experiencia_requerida) {
+      const exp = parseInt(formData.experiencia_requerida);
+      if (exp < 0 || exp > 50) {
+        errors.experiencia_requerida = 'La experiencia debe estar entre 0 y 50 años';
+      }
     }
 
     if (formData.fecha_cierre) {
@@ -359,6 +396,300 @@ export default function CrearBusquedaLaboral() {
                         )}
                         <div className="form-text">
                           {formData.requisitos.length}/2000 caracteres
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="row">
+                      <div className="col-12 mb-4">
+                        <label htmlFor="beneficios" className="form-label fw-semibold">
+                          Beneficios y Compensaciones
+                          <span className="text-muted ms-1">(Opcional - Describe qué ofreces además del salario)</span>
+                        </label>
+                        <textarea
+                          id="beneficios"
+                          name="beneficios"
+                          className={getFieldClass('beneficios')}
+                          value={formData.beneficios}
+                          onChange={handleInputChange}
+                          placeholder="• Obra social premium&#10;• Capacitaciones pagadas&#10;• Flexibilidad horaria&#10;• Home office&#10;• Bonos por objetivos"
+                          rows="4"
+                          maxLength="2000"
+                          disabled={saving}
+                        />
+                        {fieldErrors.beneficios && (
+                          <div className="invalid-feedback d-block">
+                            <i className="bi bi-exclamation-circle me-1"></i>
+                            {fieldErrors.beneficios}
+                          </div>
+                        )}
+                        <div className="form-text">
+                          {formData.beneficios.length}/2000 caracteres
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Condiciones de trabajo */}
+                  <div className="mb-5">
+                    <h5 className="fw-bold mb-3 text-info">
+                      <i className="bi bi-briefcase me-2"></i>
+                      Condiciones de Trabajo
+                    </h5>
+                    
+                    <div className="row">
+                      <div className="col-md-6 mb-4">
+                        <label htmlFor="salario_min" className="form-label fw-semibold">
+                          Salario Mínimo
+                          <span className="text-muted ms-1">(Opcional)</span>
+                        </label>
+                        <div className="input-group">
+                          <select
+                            name="moneda"
+                            className="form-select"
+                            style={{ maxWidth: '100px' }}
+                            value={formData.moneda}
+                            onChange={handleInputChange}
+                            disabled={saving}
+                          >
+                            <option value="ARS">ARS $</option>
+                            <option value="USD">USD $</option>
+                            <option value="EUR">EUR €</option>
+                          </select>
+                          <input
+                            type="number"
+                            id="salario_min"
+                            name="salario_min"
+                            className={getFieldClass('salario_min')}
+                            value={formData.salario_min}
+                            onChange={handleInputChange}
+                            placeholder="250000"
+                            min="0"
+                            step="1000"
+                            disabled={saving}
+                          />
+                        </div>
+                        {fieldErrors.salario_min && (
+                          <div className="invalid-feedback d-block">
+                            <i className="bi bi-exclamation-circle me-1"></i>
+                            {fieldErrors.salario_min}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="col-md-6 mb-4">
+                        <label htmlFor="salario_max" className="form-label fw-semibold">
+                          Salario Máximo
+                          <span className="text-muted ms-1">(Opcional)</span>
+                        </label>
+                        <div className="input-group">
+                          <span className="input-group-text">{formData.moneda === 'ARS' ? '$' : formData.moneda === 'USD' ? '$' : '€'}</span>
+                          <input
+                            type="number"
+                            id="salario_max"
+                            name="salario_max"
+                            className={getFieldClass('salario_max')}
+                            value={formData.salario_max}
+                            onChange={handleInputChange}
+                            placeholder="350000"
+                            min="0"
+                            step="1000"
+                            disabled={saving}
+                          />
+                        </div>
+                        {fieldErrors.salario_max && (
+                          <div className="invalid-feedback d-block">
+                            <i className="bi bi-exclamation-circle me-1"></i>
+                            {fieldErrors.salario_max}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="row">
+                      <div className="col-md-4 mb-4">
+                        <label htmlFor="modalidad" className="form-label fw-semibold">
+                          Modalidad de Trabajo
+                        </label>
+                        <select
+                          id="modalidad"
+                          name="modalidad"
+                          className={getFieldClass('modalidad')}
+                          value={formData.modalidad}
+                          onChange={handleInputChange}
+                          disabled={saving}
+                        >
+                          <option value="">Seleccionar modalidad</option>
+                          <option value="presencial">🏢 Presencial</option>
+                          <option value="remoto">🏠 Remoto</option>
+                          <option value="hibrido">🔄 Híbrido</option>
+                        </select>
+                        {fieldErrors.modalidad && (
+                          <div className="invalid-feedback d-block">
+                            <i className="bi bi-exclamation-circle me-1"></i>
+                            {fieldErrors.modalidad}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="col-md-4 mb-4">
+                        <label htmlFor="tipo_contrato" className="form-label fw-semibold">
+                          Tipo de Contrato
+                        </label>
+                        <select
+                          id="tipo_contrato"
+                          name="tipo_contrato"
+                          className={getFieldClass('tipo_contrato')}
+                          value={formData.tipo_contrato}
+                          onChange={handleInputChange}
+                          disabled={saving}
+                        >
+                          <option value="">Seleccionar tipo</option>
+                          <option value="indefinido">Indefinido</option>
+                          <option value="temporal">Temporal</option>
+                          <option value="por_proyecto">Por Proyecto</option>
+                          <option value="freelance">Freelance</option>
+                          <option value="pasantia">Pasantía</option>
+                        </select>
+                        {fieldErrors.tipo_contrato && (
+                          <div className="invalid-feedback d-block">
+                            <i className="bi bi-exclamation-circle me-1"></i>
+                            {fieldErrors.tipo_contrato}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="col-md-4 mb-4">
+                        <label htmlFor="jornada_laboral" className="form-label fw-semibold">
+                          Jornada Laboral
+                        </label>
+                        <select
+                          id="jornada_laboral"
+                          name="jornada_laboral"
+                          className={getFieldClass('jornada_laboral')}
+                          value={formData.jornada_laboral}
+                          onChange={handleInputChange}
+                          disabled={saving}
+                        >
+                          <option value="">Seleccionar jornada</option>
+                          <option value="completa">Tiempo Completo</option>
+                          <option value="media">Medio Tiempo</option>
+                          <option value="por_horas">Por Horas</option>
+                          <option value="flexible">Flexible</option>
+                        </select>
+                        {fieldErrors.jornada_laboral && (
+                          <div className="invalid-feedback d-block">
+                            <i className="bi bi-exclamation-circle me-1"></i>
+                            {fieldErrors.jornada_laboral}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="row">
+                      <div className="col-md-8 mb-4">
+                        <label htmlFor="ubicacion" className="form-label fw-semibold">
+                          Ubicación
+                          <span className="text-muted ms-1">(Ciudad, Provincia - Requerido si es presencial)</span>
+                        </label>
+                        <input
+                          type="text"
+                          id="ubicacion"
+                          name="ubicacion"
+                          className={getFieldClass('ubicacion')}
+                          value={formData.ubicacion}
+                          onChange={handleInputChange}
+                          placeholder="Ej: Buenos Aires, CABA"
+                          maxLength="255"
+                          disabled={saving}
+                        />
+                        {fieldErrors.ubicacion && (
+                          <div className="invalid-feedback d-block">
+                            <i className="bi bi-exclamation-circle me-1"></i>
+                            {fieldErrors.ubicacion}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="col-md-4 mb-4">
+                        <label htmlFor="experiencia_requerida" className="form-label fw-semibold">
+                          Años de Experiencia
+                          <span className="text-muted ms-1">(Mínimo)</span>
+                        </label>
+                        <input
+                          type="number"
+                          id="experiencia_requerida"
+                          name="experiencia_requerida"
+                          className={getFieldClass('experiencia_requerida')}
+                          value={formData.experiencia_requerida}
+                          onChange={handleInputChange}
+                          placeholder="2"
+                          min="0"
+                          max="50"
+                          disabled={saving}
+                        />
+                        {fieldErrors.experiencia_requerida && (
+                          <div className="invalid-feedback d-block">
+                            <i className="bi bi-exclamation-circle me-1"></i>
+                            {fieldErrors.experiencia_requerida}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="row">
+                      <div className="col-md-6 mb-4">
+                        <label htmlFor="nivel_educativo" className="form-label fw-semibold">
+                          Nivel Educativo Requerido
+                        </label>
+                        <select
+                          id="nivel_educativo"
+                          name="nivel_educativo"
+                          className={getFieldClass('nivel_educativo')}
+                          value={formData.nivel_educativo}
+                          onChange={handleInputChange}
+                          disabled={saving}
+                        >
+                          <option value="">Seleccionar nivel</option>
+                          <option value="sin_estudios">Sin estudios formales</option>
+                          <option value="primario">Primario</option>
+                          <option value="secundario">Secundario</option>
+                          <option value="terciario">Terciario</option>
+                          <option value="universitario">Universitario</option>
+                          <option value="posgrado">Posgrado</option>
+                        </select>
+                        {fieldErrors.nivel_educativo && (
+                          <div className="invalid-feedback d-block">
+                            <i className="bi bi-exclamation-circle me-1"></i>
+                            {fieldErrors.nivel_educativo}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="col-md-6 mb-4">
+                        <label htmlFor="idiomas" className="form-label fw-semibold">
+                          Idiomas Requeridos
+                          <span className="text-muted ms-1">(Opcional)</span>
+                        </label>
+                        <textarea
+                          id="idiomas"
+                          name="idiomas"
+                          className={getFieldClass('idiomas')}
+                          value={formData.idiomas}
+                          onChange={handleInputChange}
+                          placeholder="Ej: Español nativo, Inglés intermedio/avanzado, Portugués básico"
+                          rows="3"
+                          maxLength="500"
+                          disabled={saving}
+                        />
+                        {fieldErrors.idiomas && (
+                          <div className="invalid-feedback d-block">
+                            <i className="bi bi-exclamation-circle me-1"></i>
+                            {fieldErrors.idiomas}
+                          </div>
+                        )}
+                        <div className="form-text">
+                          {formData.idiomas.length}/500 caracteres
                         </div>
                       </div>
                     </div>

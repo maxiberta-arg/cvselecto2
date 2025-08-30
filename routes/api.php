@@ -22,6 +22,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Candidatos - TODAS las operaciones requieren autenticación
     Route::apiResource('candidatos', CandidatoController::class);
     Route::get('candidatos/by-user/{userId}', [CandidatoController::class, 'getByUser']);
+    Route::get('candidatos-search', [CandidatoController::class, 'search']);
+    Route::get('candidatos-by-busqueda/{busquedaId}', [CandidatoController::class, 'byBusqueda']);
+    Route::get('candidatos-estadisticas', [CandidatoController::class, 'estadisticas']);
     
     // Empresas
     Route::apiResource('empresas', EmpresaController::class);
@@ -34,4 +37,12 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Postulaciones
     Route::apiResource('postulaciones', PostulacionController::class);
+    Route::get('postulaciones/empresa/{empresaId}', [PostulacionController::class, 'byEmpresa']);
+    Route::get('postulaciones/empresa/{empresaId}/estadisticas', [PostulacionController::class, 'estadisticasEmpresa']);
+    Route::patch('postulaciones/{id}/estado', [PostulacionController::class, 'cambiarEstado']);
+    Route::patch('postulaciones/{id}/calificar', [PostulacionController::class, 'calificar']);
+    Route::get('postulaciones/empresa/{empresaId}', [PostulacionController::class, 'byEmpresa']);
+    Route::get('postulaciones/empresa/{empresaId}/estadisticas', [PostulacionController::class, 'estadisticasEmpresa']);
+    Route::patch('postulaciones/{id}/estado', [PostulacionController::class, 'cambiarEstado']);
+    Route::patch('postulaciones/{id}/calificar', [PostulacionController::class, 'calificar']);
 });

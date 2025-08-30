@@ -159,4 +159,78 @@ class PostulacionController extends Controller
         $postulacion->delete();
         return response()->json(['mensaje' => 'Postulación eliminada correctamente']);
     }
+
+    /**
+     * Get postulaciones by empresa ID
+     */
+    public function byEmpresa(string $empresaId)
+    {
+        $postulaciones = \App\Models\Postulacion::with(['busquedaLaboral', 'candidato'])
+            ->whereHas('busquedaLaboral', function($query) use ($empresaId) {
+                $query->where('empresa_id', $empresaId);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($postulaciones);
+    }
+
+    /**
+     * Get estadisticas by empresa ID
+     */
+    public function estadisticasEmpresa(string $empresaId)
+    {
+        $stats = \App\Models\Postulacion::whereHas('busquedaLaboral', function($query) use ($empresaId) {
+                $query->where('empresa_id', $empresaId);
+            })
+            ->selectRaw('
+                COUNT(*) as total,
+                COUNT(CASE WHEN estado = "postulado" THEN 1 END) as postulados,
+                COUNT(CASE WHEN estado = "en proceso" THEN 1 END) as en_proceso,
+                COUNT(CASE WHEN estado = "seleccionado" THEN 1 END) as seleccionados,
+                COUNT(CASE WHEN estado = "rechazado" THEN 1 END) as rechazados,
+                AVG(puntuacion) as promedio_puntuacion,
+                COUNT(CASE WHEN puntuacion IS NOT NULL THEN 1 END) as calificados
+            ')
+            ->first();
+
+        return response()->json($stats);
+    }
+
+    /**
+     * Change postulacion status
+     */
+    public function cambiarEstado(UpdatePostulacionRequest $request, string $id)
+    {
+        $postulacion = \App\Models\Postulacion::with(['candidato', 'busquedaLaboral'])->findOrFail($id);
+        
+        $postulacion->update([
+            'estado' => $request->estado
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Estado actualizado correctamente',
+            'postulacion' => $postulacion
+        ]);
+    }
+
+    /**
+     * Calificar candidato
+     */
+    public function calificar(UpdatePostulacionRequest $request, string $id)
+    {
+        $postulacion = \App\Models\Postulacion::with(['candidato', 'busquedaLaboral'])->findOrFail($id);
+        
+        $postulacion->update([
+            'puntuacion' => $request->puntuacion,
+            'notas_empresa' => $request->notas_empresa
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Candidato calificado correctamente',
+            'postulacion' => $postulacion
+        ]);
+    }
 }

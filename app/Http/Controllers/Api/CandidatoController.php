@@ -435,4 +435,85 @@ class CandidatoController extends Controller
         $candidato->delete();
         return response()->json(['mensaje' => 'Candidato eliminado correctamente']);
     }
+
+    /**
+     * Search candidatos with advanced filters
+     */
+    public function search()
+    {
+        $query = \App\Models\Candidato::with('user');
+        
+        // Búsqueda por término
+        if (request()->has('q') && !empty(request('q'))) {
+            $searchTerm = request('q');
+            $query->where(function($q) use ($searchTerm) {
+                $q->where('nombre', 'LIKE', '%' . $searchTerm . '%')
+                  ->orWhere('apellido', 'LIKE', '%' . $searchTerm . '%')
+                  ->orWhere('email', 'LIKE', '%' . $searchTerm . '%')
+                  ->orWhere('habilidades', 'LIKE', '%' . $searchTerm . '%');
+            });
+        }
+
+        // Filtro por nivel de educación
+        if (request()->has('nivel_educacion')) {
+            $query->where('nivel_educacion', request('nivel_educacion'));
+        }
+
+        // Filtro por años de experiencia
+        if (request()->has('experiencia_min')) {
+            $query->where('experiencia_anos', '>=', request('experiencia_min'));
+        }
+        if (request()->has('experiencia_max')) {
+            $query->where('experiencia_anos', '<=', request('experiencia_max'));
+        }
+
+        // Filtro por modalidad preferida
+        if (request()->has('modalidad')) {
+            $query->where('modalidad_preferida', request('modalidad'));
+        }
+
+        // Filtro por disponibilidad
+        if (request()->has('disponibilidad')) {
+            $query->where('disponibilidad', request('disponibilidad'));
+        }
+
+        return response()->json($query->orderBy('created_at', 'desc')->get());
+    }
+
+    /**
+     * Get candidatos by busqueda laboral
+     */
+    public function byBusqueda(string $busquedaId)
+    {
+        $candidatos = \App\Models\Candidato::whereHas('postulaciones', function($query) use ($busquedaId) {
+                $query->where('busqueda_id', $busquedaId);
+            })
+            ->with(['postulaciones' => function($query) use ($busquedaId) {
+                $query->where('busqueda_id', $busquedaId);
+            }])
+            ->get();
+
+        return response()->json($candidatos);
+    }
+
+    /**
+     * Get estadisticas generales de candidatos
+     */
+    public function estadisticas()
+    {
+        $stats = [
+            'total' => \App\Models\Candidato::count(),
+            'con_cv' => \App\Models\Candidato::whereNotNull('cv_path')->count(),
+            'con_experiencia' => \App\Models\Candidato::whereNotNull('experiencia_resumida')->count(),
+            'por_nivel_educacion' => \App\Models\Candidato::select('nivel_educacion', \DB::raw('count(*) as total'))
+                ->groupBy('nivel_educacion')
+                ->get(),
+            'por_modalidad' => \App\Models\Candidato::select('modalidad_preferida', \DB::raw('count(*) as total'))
+                ->groupBy('modalidad_preferida')
+                ->get(),
+            'registros_recientes' => \App\Models\Candidato::where('created_at', '>=', now()->subDays(30))->count()
+        ];
+
+        return response()->json($stats);
+    }
 }

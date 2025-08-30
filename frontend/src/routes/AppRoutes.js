@@ -13,6 +13,7 @@ import EditarBusquedaLaboral from '../views/EditarBusquedaLaboral';
 import BusquedaDetalle from '../views/BusquedaDetalle';
 import AgregarCandidatoManual from '../views/AgregarCandidatoManual';
 import GestionCandidatos from '../views/GestionCandidatos';
+import BusquedaCandidatos from '../views/BusquedaCandidatos';
 import ReportesEmpresa from '../views/ReportesEmpresa';
 import ConfiguracionEmpresa from '../views/ConfiguracionEmpresa';
 import Login from '../views/Login';
@@ -100,6 +101,11 @@ function AppContent() {
           <Route path="/gestion-candidatos" element={
             <ProtectedRoute rol="empresa">
               <GestionCandidatos />
+            </ProtectedRoute>
+          } />
+          <Route path="/busqueda-candidatos" element={
+            <ProtectedRoute rol="empresa">
+              <BusquedaCandidatos />
             </ProtectedRoute>
           } />
           <Route path="/candidatos/:id" element={
