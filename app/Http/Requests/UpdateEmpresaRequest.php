@@ -22,8 +22,12 @@ class UpdateEmpresaRequest extends FormRequest
      */
     public function rules(): array
     {
-        $empresaId = $this->route('empresa');
-
+        // Obtener el ID de la empresa desde la ruta de múltiples formas
+        $empresaId = $this->route('empresa') ?? 
+                    $this->route()->parameter('empresa') ?? 
+                    $this->route()->parameters()['empresa'] ?? 
+                    null;
+        
         return [
             // Campos básicos obligatorios
             'razon_social' => [
@@ -34,8 +38,8 @@ class UpdateEmpresaRequest extends FormRequest
                 'unique:empresas,razon_social,' . $empresaId
             ],
             'cuit' => [
-                'required',
-                'string',
+                'nullable',
+                'string', 
                 new CuitArgentino(),
                 'unique:empresas,cuit,' . $empresaId
             ],

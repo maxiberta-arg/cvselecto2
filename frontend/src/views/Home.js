@@ -13,9 +13,14 @@ export default function Home() {
               </div>
               <h1 className="fw-bold mb-2" style={{ color: '#1976d2', letterSpacing: '1px' }}>Bienvenido a CVSelecto</h1>
               <p className="lead text-secondary mb-4">Plataforma profesional de reclutamiento para candidatos, empresas y administradores.</p>
-              <a href="/login" className="btn btn-lg fw-bold shadow-sm" style={{ background: 'linear-gradient(90deg, #1976d2 60%, #8e24aa 100%)', color: '#fff', border: 'none', fontSize: '1.1rem', borderRadius: 12, boxShadow: '0 2px 8px #8e24aa22', transition: 'background 0.2s' }}>
-                <i className="bi bi-box-arrow-in-right me-2"></i>Iniciar sesión
-              </a>
+              <div className="d-grid gap-2 d-md-block">
+                <a href="/login" className="btn btn-lg fw-bold shadow-sm me-md-2 mb-2" style={{ background: 'linear-gradient(90deg, #1976d2 60%, #8e24aa 100%)', color: '#fff', border: 'none', fontSize: '1.1rem', borderRadius: 12, boxShadow: '0 2px 8px #8e24aa22', transition: 'background 0.2s' }}>
+                  <i className="bi bi-box-arrow-in-right me-2"></i>Iniciar sesión
+                </a>
+                <a href="/register" className="btn btn-lg btn-outline-primary fw-bold shadow-sm" style={{ fontSize: '1.1rem', borderRadius: 12, borderWidth: '2px' }}>
+                  <i className="bi bi-person-plus me-2"></i>Registrarse
+                </a>
+              </div>
             </div>
           </div>
         </div>

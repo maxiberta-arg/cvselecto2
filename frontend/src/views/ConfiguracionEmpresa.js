@@ -65,7 +65,7 @@ export default function ConfiguracionEmpresa() {
         direccion: empresa.direccion || '',
         descripcion: empresa.descripcion || '',
         sector: empresa.sector || '',
-        empleados_cantidad: empresa.empleados_cantidad || '',
+        empleados_cantidad: empresa.tamaño_empresa || '',
         sitio_web: empresa.sitio_web || '',
         linkedin_url: empresa.linkedin_url || '',
         logo: empresa.logo || null,
@@ -285,56 +285,99 @@ export default function ConfiguracionEmpresa() {
     setSuccess(null);
     
     try {
-      const formDataToSend = new FormData();
+      let response;
       
-      // Datos del usuario
-      if (formData.name && formData.name.trim()) {
-        formDataToSend.append('user_name', formData.name.trim());
-      }
-      if (formData.email && formData.email.trim()) {
-        formDataToSend.append('user_email', formData.email.trim());
-      }
-      
-      if (formData.password && formData.password.trim()) {
-        formDataToSend.append('password', formData.password);
-        formDataToSend.append('password_confirmation', formData.password_confirmation || '');
-      }
-      
-      // Datos de la empresa
-      if (formData.razon_social) formDataToSend.append('razon_social', formData.razon_social.trim());
-      if (formData.cuit) formDataToSend.append('cuit', formData.cuit.replace(/\s/g, '').replace(/-/g, ''));
-      if (formData.telefono) formDataToSend.append('telefono', formData.telefono.trim());
-      if (formData.direccion) formDataToSend.append('direccion', formData.direccion.trim());
-      if (formData.descripcion) formDataToSend.append('descripcion', formData.descripcion.trim());
-      
-      if (formData.sector && formData.sector.trim()) {
-        formDataToSend.append('sector', formData.sector.trim());
-      }
-      if (formData.empleados_cantidad && formData.empleados_cantidad.toString().trim()) {
-        // Enviar como número entero
-        const empleados = parseInt(formData.empleados_cantidad, 10);
-        if (!isNaN(empleados) && empleados > 0) {
-          formDataToSend.append('empleados_cantidad', empleados);
-        }
-      }
-      if (formData.sitio_web && formData.sitio_web.trim()) {
-        formDataToSend.append('sitio_web', formData.sitio_web.trim());
-      }
-      if (formData.linkedin_url && formData.linkedin_url.trim()) {
-        formDataToSend.append('linkedin_url', formData.linkedin_url.trim());
-      }
-      
+      // Si hay logo (archivo), usar FormData
       if (formData.logo && typeof formData.logo === 'object') {
+        const formDataToSend = new FormData();
+        
+        // Datos del usuario
+        if (formData.name && formData.name.trim()) {
+          formDataToSend.append('user_name', formData.name.trim());
+        }
+        if (formData.email && formData.email.trim()) {
+          formDataToSend.append('user_email', formData.email.trim());
+        }
+        
+        if (formData.password && formData.password.trim()) {
+          formDataToSend.append('password', formData.password);
+          formDataToSend.append('password_confirmation', formData.password_confirmation || '');
+        }
+        
+        // Datos de la empresa - Campos requeridos siempre se envían
+        formDataToSend.append('razon_social', formData.razon_social?.trim() || '');
+        formDataToSend.append('telefono', formData.telefono?.trim() || '');
+        
+        // Campos opcionales
+        if (formData.cuit) formDataToSend.append('cuit', formData.cuit.replace(/\s/g, '').replace(/-/g, ''));
+        if (formData.direccion) formDataToSend.append('direccion', formData.direccion.trim());
+        if (formData.descripcion) formDataToSend.append('descripcion', formData.descripcion.trim());
+        
+        if (formData.sector && formData.sector.trim()) {
+          formDataToSend.append('sector', formData.sector.trim());
+        }
+        if (formData.empleados_cantidad && formData.empleados_cantidad.toString().trim()) {
+          const empleados = parseInt(formData.empleados_cantidad, 10);
+          if (!isNaN(empleados) && empleados > 0) {
+            formDataToSend.append('tamaño_empresa', empleados);
+          }
+        }
+        if (formData.sitio_web && formData.sitio_web.trim()) {
+          formDataToSend.append('sitio_web', formData.sitio_web.trim());
+        }
+        if (formData.linkedin_url && formData.linkedin_url.trim()) {
+          formDataToSend.append('linkedin_url', formData.linkedin_url.trim());
+        }
+        
         formDataToSend.append('logo', formData.logo);
+        
+        // Debug: mostrar los datos que se van a enviar
+        console.log('Enviando con FormData (con logo):');
+        for (let pair of formDataToSend.entries()) {
+          console.log(pair[0] + ': ' + pair[1]);
+        }
+        
+        response = await api.post(`/empresas/${empresaId}?_method=PUT`, formDataToSend, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+        
+      } else {
+        // Sin archivo, usar JSON
+        const dataToSend = {
+          // Datos del usuario
+          ...(formData.name && formData.name.trim() && { user_name: formData.name.trim() }),
+          ...(formData.email && formData.email.trim() && { user_email: formData.email.trim() }),
+          ...(formData.password && formData.password.trim() && { 
+            password: formData.password,
+            password_confirmation: formData.password_confirmation || ''
+          }),
+          
+          // Datos de la empresa - Campos requeridos
+          razon_social: formData.razon_social?.trim() || '',
+          telefono: formData.telefono?.trim() || '',
+          
+          // Campos opcionales
+          ...(formData.cuit && { cuit: formData.cuit.replace(/\s/g, '').replace(/-/g, '') }),
+          ...(formData.direccion && { direccion: formData.direccion.trim() }),
+          ...(formData.descripcion && { descripcion: formData.descripcion.trim() }),
+          ...(formData.sector && formData.sector.trim() && { sector: formData.sector.trim() }),
+          ...(formData.sitio_web && formData.sitio_web.trim() && { sitio_web: formData.sitio_web.trim() }),
+          ...(formData.linkedin_url && formData.linkedin_url.trim() && { linkedin_url: formData.linkedin_url.trim() }),
+          
+          // Tamaño empresa como número
+          ...(formData.empleados_cantidad && formData.empleados_cantidad.toString().trim() && {
+            tamaño_empresa: parseInt(formData.empleados_cantidad, 10)
+          })
+        };
+        
+        console.log('Enviando con JSON (sin logo):', dataToSend);
+        
+        response = await api.put(`/empresas/${empresaId}`, dataToSend);
       }
       
-      const response = await api.post(`/empresas/${empresaId}?_method=PUT`, formDataToSend, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      
-      if (response.data.success) {
+      if (response?.data?.success) {
         setSuccess('✅ Configuración actualizada correctamente');
         
         if (formData.name !== originalData.name || formData.email !== originalData.email) {

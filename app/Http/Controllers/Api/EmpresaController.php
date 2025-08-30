@@ -7,6 +7,8 @@ use App\Http\Requests\UpdateEmpresaRequest;
 use App\Models\Empresa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use App\Rules\CuitUnico;
 
 class EmpresaController extends Controller
 {
@@ -71,9 +73,83 @@ class EmpresaController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateEmpresaRequest $request, string $id)
+    public function update(Request $request, string $id)
     {
         $empresa = Empresa::findOrFail($id);
+        
+        // Debug: Registrar datos recibidos
+        \Log::info('Update Empresa - Datos recibidos:', [
+            'id' => $id,
+            'cuit_enviado' => $request->cuit,
+            'cuit_actual_empresa' => $empresa->cuit
+        ]);
+        
+        // Limpiar CUIT si viene con formato
+        $cuitLimpio = null;
+        if ($request->has('cuit') && $request->cuit) {
+            $cuitLimpio = preg_replace('/[^0-9]/', '', $request->cuit);
+        }
+        
+        // Crear una copia de los datos para validación
+        $dataParaValidacion = $request->all();
+        if ($cuitLimpio) {
+            $dataParaValidacion['cuit'] = $cuitLimpio;
+        }
+        
+        // Validación manual con el ID correcto y usando Rule::unique()
+        $validator = \Validator::make($dataParaValidacion, [
+            'razon_social' => [
+                'required',
+                'string',
+                'min:3',
+                'max:255',
+                \Illuminate\Validation\Rule::unique('empresas', 'razon_social')->ignore($id)
+            ],
+            'cuit' => [
+                'nullable',
+                'string',
+                new \App\Rules\CuitArgentino(),
+                new CuitUnico($id)
+            ],
+            'telefono' => [
+                'required',
+                'string',
+                'regex:/^[\d\s\-\+\(\)]+$/',
+                'min:8',
+                'max:20'
+            ],
+            'direccion' => 'nullable|string|max:255',
+            'descripcion' => 'nullable|string|max:1000',
+            'sitio_web' => 'nullable|url|max:255',
+            'linkedin_url' => 'nullable|url|max:255',
+            'sector' => 'nullable|string|max:100',
+            'tamaño_empresa' => 'nullable|integer|min:1|max:500000',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            
+            // Campos del usuario
+            'user_name' => 'nullable|string|min:2|max:255',
+            'user_email' => [
+                'nullable',
+                'email',
+                'max:255',
+                \Illuminate\Validation\Rule::unique('users', 'email')->ignore($empresa->user_id)
+            ],
+            'password' => 'nullable|string|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            \Log::warning('Validación fallida para empresa ID: ' . $id, [
+                'errors' => $validator->errors()->toArray(),
+                'cuit_enviado' => $request->cuit,
+                'cuit_limpio' => $cuitLimpio
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Errores de validación',
+                'errors' => $validator->errors()
+            ], 422);
+        }
         
         // Actualizar datos del usuario asociado si se proporcionan
         $user = $empresa->user;
@@ -85,29 +161,10 @@ class EmpresaController extends Controller
             }
             
             if ($request->has('user_email') && $request->user_email) {
-                // Validar que el email no esté en uso por otro usuario
-                $emailExists = \App\Models\User::where('email', $request->user_email)
-                                              ->where('id', '!=', $user->id)
-                                              ->exists();
-                if ($emailExists) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Este email ya está en uso por otro usuario.',
-                        'errors' => ['user_email' => ['Este email ya está en uso por otro usuario.']]
-                    ], 422);
-                }
                 $userDataToUpdate['email'] = $request->user_email;
             }
             
             if ($request->has('password') && $request->password) {
-                // Validar confirmación de contraseña
-                if (!$request->has('password_confirmation') || $request->password !== $request->password_confirmation) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'La confirmación de contraseña no coincide.',
-                        'errors' => ['password_confirmation' => ['La confirmación de contraseña no coincide.']]
-                    ], 422);
-                }
                 $userDataToUpdate['password'] = bcrypt($request->password);
             }
             
@@ -116,8 +173,18 @@ class EmpresaController extends Controller
             }
         }
         
-        // Actualizar datos de la empresa
-        $data = $request->validated();
+        // Preparar datos de la empresa para actualización
+        $data = $request->only([
+            'razon_social', 'telefono', 'direccion', 'descripcion', 
+            'sitio_web', 'linkedin_url', 'sector', 'tamaño_empresa'
+        ]);
+        
+        // Usar el CUIT limpio si se proporcionó
+        if ($cuitLimpio !== null) {
+            $data['cuit'] = $cuitLimpio;
+        }
+        
+        \Log::info('Datos finales para actualizar empresa:', $data);
         
         // Procesar logo si viene en la request
         if ($request->hasFile('logo')) {

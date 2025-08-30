@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\PostulacionController;
 
 // Rutas públicas (sin autenticación)
 Route::post('login', [AuthController::class, 'login']);
+Route::post('register', [AuthController::class, 'register']);
 
 // Rutas que requieren autenticación
 Route::middleware('auth:sanctum')->group(function () {

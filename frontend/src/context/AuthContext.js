@@ -58,6 +58,26 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Register usando API real
+  const register = async (userData) => {
+    try {
+      const response = await api.post('/register', userData);
+      const { user, token } = response.data;
+      
+      // Guardar token y datos del usuario
+      localStorage.setItem('auth_token', token);
+      localStorage.setItem('user_data', JSON.stringify(user));
+      
+      setUser(user);
+      setIsAuthenticated(true);
+      
+      return { success: true, user };
+    } catch (error) {
+      const message = error.response?.data?.message || 'Error en el registro';
+      return { success: false, error: message };
+    }
+  };
+
   // Logout
   const logout = async () => {
     try {
@@ -86,6 +106,7 @@ export function AuthProvider({ children }) {
     isAuthenticated,
     loading,
     login,
+    register,
     logout,
     updateUserInfo
   };

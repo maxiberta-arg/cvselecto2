@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('busquedas_laborales', function (Blueprint $table) {
-            //
+        Schema::table('empresas', function (Blueprint $table) {
+            $table->string('cuit')->nullable()->change();
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('busquedas_laborales', function (Blueprint $table) {
-            //
+        Schema::table('empresas', function (Blueprint $table) {
+            $table->string('cuit')->nullable(false)->change();
         });
     }
 };

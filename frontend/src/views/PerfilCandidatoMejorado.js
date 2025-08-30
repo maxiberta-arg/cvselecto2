@@ -57,6 +57,11 @@ export default function PerfilCandidatoMejorado() {
           // Viendo perfil propio
           response = await api.get(`/candidatos/by-user/${user.id}`);
           setIsOwnProfile(true);
+          // Habilitar edición inmediata para perfil propio si está incompleto
+          const candidato = response.data;
+          if (!candidato.bio || !candidato.habilidades || !candidato.telefono) {
+            setEditMode(true);
+          }
         } else {
           return;
         }
@@ -598,7 +603,6 @@ export default function PerfilCandidatoMejorado() {
     return classes;
   };
 
-  // Función para mostrar mensaje de error/éxito de campo
   const renderFieldFeedback = (fieldName) => {
     if (fieldErrors[`${fieldName}_success`]) {
       return (
@@ -618,7 +622,24 @@ export default function PerfilCandidatoMejorado() {
       );
     }
     
+    // Mostrar ayuda para campos importantes cuando están vacíos en modo de visualización
+    if (!editMode && !formData[fieldName] && ['bio', 'habilidades', 'experiencia_resumida'].includes(fieldName)) {
+      return (
+        <div className="text-muted small">
+          <i className="bi bi-info-circle me-1"></i>
+          Complete este campo para un perfil más atractivo
+        </div>
+      );
+    }
+    
     return null;
+  };
+
+  // Función para calcular completitud del perfil
+  const calcularCompletitud = () => {
+    const camposImportantes = ['name', 'apellido', 'telefono', 'bio', 'habilidades', 'experiencia_resumida', 'educacion_resumida'];
+    const camposCompletos = camposImportantes.filter(campo => formData[campo]?.trim()).length;
+    return Math.round((camposCompletos / camposImportantes.length) * 100);
   };
 
   if (loading) {
@@ -673,8 +694,31 @@ export default function PerfilCandidatoMejorado() {
                       </div>
                     )}
                   </div>
-                  <h3 className="fw-bold mb-1 text-primary">{formData.name}</h3>
-                  <p className="text-muted mb-0">{formData.email}</p>
+                  <h3 className="fw-bold mb-1 text-primary">{formData.name} {formData.apellido}</h3>
+                  <p className="text-muted mb-2">{formData.email}</p>
+                  
+                  {/* Barra de completitud del perfil - Solo para perfil propio */}
+                  {isOwnProfile && (
+                    <div className="w-100 mb-3" style={{ maxWidth: '300px' }}>
+                      <div className="d-flex justify-content-between align-items-center mb-1">
+                        <small className="text-muted">Completitud del perfil</small>
+                        <small className="fw-bold text-primary">{calcularCompletitud()}%</small>
+                      </div>
+                      <div className="progress" style={{ height: '6px' }}>
+                        <div 
+                          className={`progress-bar ${calcularCompletitud() >= 80 ? 'bg-success' : calcularCompletitud() >= 50 ? 'bg-warning' : 'bg-danger'}`}
+                          role="progressbar" 
+                          style={{ width: `${calcularCompletitud()}%` }}
+                        ></div>
+                      </div>
+                      {calcularCompletitud() < 100 && (
+                        <small className="text-muted">
+                          <i className="bi bi-info-circle me-1"></i>
+                          Completa tu perfil para ser más visible
+                        </small>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Mensajes de estado */}

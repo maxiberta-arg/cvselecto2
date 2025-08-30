@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 // Login con diseño profesional y coherente con la página principal
@@ -135,6 +135,20 @@ export default function Login() {
                 </>
               )}
             </button>
+            
+            {/* Link al registro */}
+            <div className="text-center mt-3">
+              <p className="text-muted mb-0">
+                ¿No tienes cuenta?{' '}
+                <Link 
+                  to="/register" 
+                  className="text-decoration-none fw-semibold"
+                  style={{ color: '#1976d2' }}
+                >
+                  Registrarse
+                </Link>
+              </p>
+            </div>
           </form>
         </div>
       </div>

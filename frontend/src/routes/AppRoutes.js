@@ -4,6 +4,7 @@ import Home from '../views/Home';
 import CandidatoDashboard from '../views/CandidatoDashboard';
 import EmpresaDashboard from '../views/EmpresaDashboard';
 import AdminDashboard from '../views/AdminDashboard';
+import AdminCandidatos from '../views/AdminCandidatos';
 import PerfilCandidatoMejorado from '../views/PerfilCandidatoMejorado';
 import PerfilEmpresaRedirect from '../views/PerfilEmpresaRedirect';
 import PerfilAdmin from '../views/PerfilAdmin';
@@ -17,6 +18,7 @@ import BusquedaCandidatos from '../views/BusquedaCandidatos';
 import ReportesEmpresa from '../views/ReportesEmpresa';
 import ConfiguracionEmpresa from '../views/ConfiguracionEmpresa';
 import Login from '../views/Login';
+import Register from '../views/Register';
 import Navbar from '../components/Navbar';
 import ProtectedRoute from './ProtectedRoute';
 import { AuthProvider, useAuth } from '../context/AuthContext';
@@ -43,11 +45,12 @@ function AppContent() {
   return (
     <Router>
       {/* Mostrar Navbar solo si no estamos en Home o Login */}
-      {!['/', '/login'].includes(window.location.pathname) && <Navbar />}
-      <div className={['/', '/login'].includes(window.location.pathname) ? 'no-navbar' : ''}>
+      {!['/', '/login', '/register'].includes(window.location.pathname) && <Navbar />}
+      <div className={['/', '/login', '/register'].includes(window.location.pathname) ? 'no-navbar' : ''}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="/candidato" element={
             <ProtectedRoute rol="candidato">
               <CandidatoDashboard />
@@ -126,6 +129,11 @@ function AppContent() {
           <Route path="/admin" element={
             <ProtectedRoute rol="admin">
               <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin-candidatos" element={
+            <ProtectedRoute rol="admin">
+              <AdminCandidatos />
             </ProtectedRoute>
           } />
         </Routes>
