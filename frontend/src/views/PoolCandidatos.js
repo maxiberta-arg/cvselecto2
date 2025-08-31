@@ -74,7 +74,7 @@ export default function PoolCandidatos() {
         if (value) params.append(key, value);
       });
 
-      const response = await api.get(`/api/pool-candidatos?${params}`);
+      const response = await api.get(`/pool-candidatos?${params}`);
       if (response.data.success) {
         setCandidatos(response.data.data.data || []);
       }
@@ -88,7 +88,7 @@ export default function PoolCandidatos() {
 
   const cargarEstadisticas = async () => {
     try {
-      const response = await api.get('/api/pool-candidatos/estadisticas');
+      const response = await api.get('/pool-candidatos/estadisticas');
       if (response.data.success) {
         setEstadisticas(response.data.data);
       }
@@ -99,7 +99,7 @@ export default function PoolCandidatos() {
 
   const cargarCandidatosPotenciales = async () => {
     try {
-      const response = await api.get('/api/candidatos');
+      const response = await api.get('/candidatos');
       setCandidatosPotenciales(response.data || []);
     } catch (error) {
       console.error('Error al cargar candidatos:', error);
@@ -112,7 +112,7 @@ export default function PoolCandidatos() {
     setActionLoading(true);
 
     try {
-      const response = await api.post('/api/pool-candidatos/crear-candidato', formData);
+      const response = await api.post('/pool-candidatos/crear-candidato', formData);
       
       if (response.data.success) {
         toast.success('Candidato creado y agregado al pool exitosamente');
@@ -123,6 +123,7 @@ export default function PoolCandidatos() {
       }
     } catch (error) {
       console.error('Error al crear candidato:', error);
+      
       if (error.response?.data?.errors) {
         Object.values(error.response.data.errors).forEach(errors => {
           errors.forEach(error => toast.error(error));
@@ -139,7 +140,7 @@ export default function PoolCandidatos() {
     setActionLoading(true);
 
     try {
-      const response = await api.post('/api/pool-candidatos/agregar-existente', {
+      const response = await api.post('/pool-candidatos/agregar-existente', {
         candidato_id: candidatoId,
         origen: 'manual'
       });
@@ -162,7 +163,7 @@ export default function PoolCandidatos() {
     setActionLoading(true);
 
     try {
-      const response = await api.put(`/api/pool-candidatos/candidato/${candidatoId}`, {
+      const response = await api.put(`/pool-candidatos/candidato/${candidatoId}`, {
         estado_interno: nuevoEstado,
         observaciones: `Cambio de estado a ${nuevoEstado}`
       });
@@ -190,7 +191,7 @@ export default function PoolCandidatos() {
         setActionLoading(true);
         
         try {
-          const response = await api.put(`/api/pool-candidatos/candidato/${candidatoId}`, {
+          const response = await api.put(`/pool-candidatos/candidato/${candidatoId}`, {
             puntuacion_empresa: puntuacionNum,
             notas_privadas: notas || '',
             observaciones: 'Actualización de calificación'
@@ -218,7 +219,7 @@ export default function PoolCandidatos() {
       setActionLoading(true);
       
       try {
-        const response = await api.delete(`/api/pool-candidatos/candidato/${candidatoId}`);
+        const response = await api.delete(`/pool-candidatos/candidato/${candidatoId}`);
         
         if (response.data.success) {
           toast.success('Candidato eliminado del pool');

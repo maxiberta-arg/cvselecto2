@@ -128,7 +128,7 @@ class EmpresaPoolController extends Controller
                 ], 409);
             }
 
-            // Datos para el pool
+            // Datos para el pool - usar arrays directos, no JSON
             $datosPool = [
                 'origen' => $request->get('origen', 'manual'),
                 'estado_interno' => 'activo',
@@ -144,7 +144,11 @@ class EmpresaPoolController extends Controller
                 ]]
             ];
 
-            $empresa->candidatos()->attach($candidato->id, $datosPool);
+            // Crear directamente usando el modelo para aprovechar los casts
+            EmpresaCandidato::create(array_merge($datosPool, [
+                'empresa_id' => $empresa->id,
+                'candidato_id' => $candidato->id
+            ]));
 
             DB::commit();
 
@@ -174,19 +178,19 @@ class EmpresaPoolController extends Controller
             'nombre' => 'required|string|max:255',
             'apellido' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'telefono' => 'sometimes|string|max:20',
-            'fecha_nacimiento' => 'sometimes|date',
-            'direccion' => 'sometimes|string|max:500',
-            'nivel_educacion' => 'sometimes|string|max:100',
-            'experiencia_anos' => 'sometimes|integer|min:0',
-            'disponibilidad' => 'sometimes|string|max:50',
-            'modalidad_preferida' => 'sometimes|string|max:50',
-            'pretension_salarial' => 'sometimes|numeric|min:0',
-            'linkedin_url' => 'sometimes|url',
-            'portfolio_url' => 'sometimes|url',
-            'tags' => 'sometimes|array',
-            'notas_privadas' => 'sometimes|string|max:1000',
-            'puntuacion_empresa' => 'sometimes|numeric|min:0|max:10'
+            'telefono' => 'nullable|string|max:20',
+            'fecha_nacimiento' => 'nullable|date',
+            'direccion' => 'nullable|string|max:500',
+            'nivel_educacion' => 'nullable|string|max:100',
+            'experiencia_anos' => 'nullable|integer|min:0',
+            'disponibilidad' => 'nullable|string|max:50',
+            'modalidad_preferida' => 'nullable|string|max:50',
+            'pretension_salarial' => 'nullable|numeric|min:0',
+            'linkedin_url' => 'nullable|url',
+            'portfolio_url' => 'nullable|url',
+            'tags' => 'nullable|array',
+            'notas_privadas' => 'nullable|string|max:1000',
+            'puntuacion_empresa' => 'nullable|numeric|min:0|max:10'
         ]);
 
         if ($validator->fails()) {
@@ -207,7 +211,7 @@ class EmpresaPoolController extends Controller
                 'name' => $request->nombre . ' ' . $request->apellido,
                 'email' => $request->email,
                 'password' => bcrypt('candidato123'), // Password temporal
-                'role' => 'candidato'
+                'rol' => 'candidato'
             ]);
 
             // Crear candidato
@@ -228,7 +232,7 @@ class EmpresaPoolController extends Controller
                 'portfolio_url' => $request->portfolio_url
             ]);
 
-            // Agregar al pool
+            // Agregar al pool - usar arrays directos, no JSON
             $datosPool = [
                 'origen' => 'manual',
                 'estado_interno' => 'activo',
@@ -244,7 +248,11 @@ class EmpresaPoolController extends Controller
                 ]]
             ];
 
-            $empresa->candidatos()->attach($candidato->id, $datosPool);
+            // Crear directamente usando el modelo para aprovechar los casts
+            EmpresaCandidato::create(array_merge($datosPool, [
+                'empresa_id' => $empresa->id,
+                'candidato_id' => $candidato->id
+            ]));
 
             DB::commit();
 
@@ -444,7 +452,7 @@ class EmpresaPoolController extends Controller
                     continue;
                 }
 
-                // Agregar al pool
+                // Agregar al pool - usar arrays directos, no JSON
                 $datosPool = [
                     'origen' => 'postulacion',
                     'estado_interno' => 'activo',
@@ -460,7 +468,11 @@ class EmpresaPoolController extends Controller
                     ]]
                 ];
 
-                $empresa->candidatos()->attach($postulacion->candidato_id, $datosPool);
+                // Crear directamente usando el modelo para aprovechar los casts
+                EmpresaCandidato::create(array_merge($datosPool, [
+                    'empresa_id' => $empresa->id,
+                    'candidato_id' => $postulacion->candidato_id
+                ]));
                 $candidatosAgregados++;
             }
 
@@ -494,7 +506,7 @@ class EmpresaPoolController extends Controller
     {
         $usuario = Auth::user();
         
-        if (!$usuario || $usuario->role !== 'empresa') {
+        if (!$usuario || $usuario->rol !== 'empresa') {
             throw new \Exception('Usuario no autorizado');
         }
 
