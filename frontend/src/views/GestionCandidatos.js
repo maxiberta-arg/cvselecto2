@@ -423,6 +423,15 @@ export default function GestionCandidatos() {
                           >
                             <i className="bi bi-eye"></i>
                           </button>
+                          
+                          {/* Botón de editar candidato */}
+                          <button 
+                            className="btn btn-outline-secondary"
+                            title="Editar candidato"
+                            onClick={() => navigate(`/empresa/candidatos/editar/${postulacion.candidato?.id}`)}
+                          >
+                            <i className="bi bi-pencil"></i>
+                          </button>
                         </div>
                       </td>
                     </tr>

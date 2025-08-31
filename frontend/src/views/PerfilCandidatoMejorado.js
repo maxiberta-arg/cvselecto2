@@ -23,16 +23,29 @@ export default function PerfilCandidatoMejorado() {
     password: '',
     password_confirmation: '',
     
-    // Datos del candidato (tabla candidatos)
+    // Datos del candidato (tabla candidatos) - COMPLETOS
     candidatoId: null,
+    nombre: '', // Campo separado para candidato
     apellido: '',
+    fecha_nacimiento: '',
     telefono: '',
     direccion: '',
     bio: '',
     habilidades: '',
-    linkedin: '',
+    linkedin: '', // Campo legacy - mantener compatibilidad
+    linkedin_url: '', // Campo nuevo estandarizado
+    portfolio_url: '',
     experiencia_resumida: '',
     educacion_resumida: '',
+    
+    // Campos adicionales de migraciones
+    nivel_educacion: '',
+    experiencia_anos: '',
+    disponibilidad: 'inmediata',
+    modalidad_preferida: 'presencial',
+    pretension_salarial: '',
+    
+    // Archivos
     avatar: null,
     cv: null
   });
@@ -74,14 +87,27 @@ export default function PerfilCandidatoMejorado() {
           password: '',
           password_confirmation: '',
           candidatoId: candidato.id,
+          nombre: candidato.nombre || '',
           apellido: candidato.apellido || '',
+          fecha_nacimiento: candidato.fecha_nacimiento || '',
           telefono: candidato.telefono || '',
           direccion: candidato.direccion || '',
           bio: candidato.bio || '',
           habilidades: candidato.habilidades || '',
-          linkedin: candidato.linkedin || '',
+          linkedin: candidato.linkedin || '', // Campo legacy
+          linkedin_url: candidato.linkedin_url || '',
+          portfolio_url: candidato.portfolio_url || '',
           experiencia_resumida: candidato.experiencia_resumida || '',
           educacion_resumida: candidato.educacion_resumida || '',
+          
+          // Campos adicionales
+          nivel_educacion: candidato.nivel_educacion || '',
+          experiencia_anos: candidato.experiencia_anos || '',
+          disponibilidad: candidato.disponibilidad || 'inmediata',
+          modalidad_preferida: candidato.modalidad_preferida || 'presencial',
+          pretension_salarial: candidato.pretension_salarial || '',
+          
+          // Archivos
           avatar: candidato.avatar,
           cv: candidato.cv_path
         };
