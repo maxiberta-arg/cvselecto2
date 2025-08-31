@@ -45,7 +45,7 @@ export default function ReportesEmpresa() {
       );
 
       // Calcular estadísticas
-      const busquedasActivas = busquedasEmpresa.filter(b => b.estado === 'activa').length;
+      const busquedasActivas = busquedasEmpresa.filter(b => b.estado === 'abierta').length;
       const candidatosUnicos = new Set(postulacionesEmpresa.map(p => p.candidato_id)).size;
       const promedioPostulaciones = busquedasEmpresa.length > 0 
         ? (postulacionesEmpresa.length / busquedasEmpresa.length).toFixed(1)
@@ -351,7 +351,7 @@ export default function ReportesEmpresa() {
                           </td>
                           <td>
                             <span className={`badge ${
-                              busqueda.estado === 'activa' ? 'bg-success' : 
+                              busqueda.estado === 'abierta' ? 'bg-success' : 
                               busqueda.estado === 'pausada' ? 'bg-warning' : 'bg-danger'
                             }`}>
                               {busqueda.estado}

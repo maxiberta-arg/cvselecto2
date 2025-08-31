@@ -53,7 +53,7 @@ export default function BusquedaDetalle() {
       setActionLoading(postulacionId);
       setError(null);
       
-      await api.put(`/postulaciones/${postulacionId}`, { 
+      await api.patch(`/postulaciones/${postulacionId}/estado`, { 
         estado: nuevoEstado 
       });
       
@@ -82,7 +82,7 @@ export default function BusquedaDetalle() {
       setActionLoading(postulacionId);
       setError(null);
       
-      await api.put(`/postulaciones/${postulacionId}`, { 
+      await api.patch(`/postulaciones/${postulacionId}/calificar`, { 
         puntuacion: puntuacion,
         notas_empresa: notas
       });
@@ -434,14 +434,57 @@ export default function BusquedaDetalle() {
                                   
                                   {/* Botones de acción directos */}
                                   <div className="btn-group" role="group">
+                                    {/* Botones según el estado actual */}
                                     {postulacion.estado === 'postulado' && (
                                       <button 
                                         className="btn btn-outline-info btn-sm" 
                                         onClick={() => cambiarEstadoPostulacion(postulacion.id, 'en proceso')}
-                                        disabled={actionLoading}
+                                        disabled={actionLoading === postulacion.id}
                                         title="Marcar en proceso"
                                       >
-                                        <i className="bi bi-hourglass-split"></i>
+                                        {actionLoading === postulacion.id ? (
+                                          <div className="spinner-border spinner-border-sm" role="status">
+                                            <span className="visually-hidden">Cargando...</span>
+                                          </div>
+                                        ) : (
+                                          <i className="bi bi-hourglass-split"></i>
+                                        )}
+                                      </button>
+                                    )}
+                                    
+                                    {/* Botón para volver a postulado */}
+                                    {(postulacion.estado === 'en proceso' || postulacion.estado === 'rechazado') && (
+                                      <button 
+                                        className="btn btn-outline-secondary btn-sm" 
+                                        onClick={() => cambiarEstadoPostulacion(postulacion.id, 'postulado')}
+                                        disabled={actionLoading === postulacion.id}
+                                        title="Volver a postulado"
+                                      >
+                                        {actionLoading === postulacion.id ? (
+                                          <div className="spinner-border spinner-border-sm" role="status">
+                                            <span className="visually-hidden">Cargando...</span>
+                                          </div>
+                                        ) : (
+                                          <i className="bi bi-arrow-counterclockwise"></i>
+                                        )}
+                                      </button>
+                                    )}
+                                    
+                                    {/* Botón para volver a en proceso desde seleccionado */}
+                                    {postulacion.estado === 'seleccionado' && (
+                                      <button 
+                                        className="btn btn-outline-info btn-sm" 
+                                        onClick={() => cambiarEstadoPostulacion(postulacion.id, 'en proceso')}
+                                        disabled={actionLoading === postulacion.id}
+                                        title="Volver a en proceso"
+                                      >
+                                        {actionLoading === postulacion.id ? (
+                                          <div className="spinner-border spinner-border-sm" role="status">
+                                            <span className="visually-hidden">Cargando...</span>
+                                          </div>
+                                        ) : (
+                                          <i className="bi bi-arrow-left-circle"></i>
+                                        )}
                                       </button>
                                     )}
                                     
@@ -450,18 +493,30 @@ export default function BusquedaDetalle() {
                                         <button 
                                           className="btn btn-outline-success btn-sm" 
                                           onClick={() => cambiarEstadoPostulacion(postulacion.id, 'seleccionado')}
-                                          disabled={actionLoading}
+                                          disabled={actionLoading === postulacion.id}
                                           title="Seleccionar candidato"
                                         >
-                                          <i className="bi bi-check-circle"></i>
+                                          {actionLoading === postulacion.id ? (
+                                            <div className="spinner-border spinner-border-sm" role="status">
+                                              <span className="visually-hidden">Cargando...</span>
+                                            </div>
+                                          ) : (
+                                            <i className="bi bi-check-circle"></i>
+                                          )}
                                         </button>
                                         <button 
                                           className="btn btn-outline-danger btn-sm" 
                                           onClick={() => cambiarEstadoPostulacion(postulacion.id, 'rechazado')}
-                                          disabled={actionLoading}
+                                          disabled={actionLoading === postulacion.id}
                                           title="Rechazar candidato"
                                         >
-                                          <i className="bi bi-x-circle"></i>
+                                          {actionLoading === postulacion.id ? (
+                                            <div className="spinner-border spinner-border-sm" role="status">
+                                              <span className="visually-hidden">Cargando...</span>
+                                            </div>
+                                          ) : (
+                                            <i className="bi bi-x-circle"></i>
+                                          )}
                                         </button>
                                       </>
                                     )}
@@ -480,10 +535,16 @@ export default function BusquedaDetalle() {
                                           }
                                         }
                                       }}
-                                      disabled={actionLoading}
+                                      disabled={actionLoading === postulacion.id}
                                       title="Calificar candidato"
                                     >
-                                      <i className="bi bi-star"></i>
+                                      {actionLoading === postulacion.id ? (
+                                        <div className="spinner-border spinner-border-sm" role="status">
+                                          <span className="visually-hidden">Cargando...</span>
+                                        </div>
+                                      ) : (
+                                        <i className="bi bi-star"></i>
+                                      )}
                                     </button>
                                   </div>
                                   

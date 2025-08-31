@@ -189,7 +189,7 @@ export default function CrearBusquedaLaboral() {
       
       // Redirect after success
       setTimeout(() => {
-        navigate('/mis-busquedas');
+        navigate('/mis-busquedas-laborales');
       }, 2000);
 
     } catch (err) {

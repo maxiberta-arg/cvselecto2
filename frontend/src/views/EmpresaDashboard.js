@@ -34,8 +34,13 @@ export default function EmpresaDashboard() {
         // Cargar búsquedas de la empresa
         const busquedasResponse = await api.get('/busquedas-laborales');
         const todasLasBusquedas = busquedasResponse.data;
-        const busquedasEmpresa = todasLasBusquedas.filter(b => b.empresa_id === empresa.id);
-        console.log('Búsquedas de la empresa:', busquedasEmpresa);
+        console.log('Todas las búsquedas cargadas:', todasLasBusquedas);
+        console.log('ID de empresa actual:', empresa.id);
+        const busquedasEmpresa = todasLasBusquedas.filter(b => {
+          console.log(`Búsqueda ${b.id}: empresa_id=${b.empresa_id}, coincide=${b.empresa_id === empresa.id}`);
+          return b.empresa_id === empresa.id;
+        });
+        console.log('Búsquedas filtradas de la empresa:', busquedasEmpresa);
 
         // Cargar postulaciones relacionadas
         const postulacionesResponse = await api.get(`/postulaciones`);
@@ -48,7 +53,7 @@ export default function EmpresaDashboard() {
         console.log('Postulaciones para la empresa:', postulacionesEmpresa);
 
         // Calcular estadísticas reales
-        const busquedasActivas = busquedasEmpresa.filter(b => b.estado === 'activa').length;
+        const busquedasActivas = busquedasEmpresa.filter(b => b.estado === 'abierta').length;
         const candidatosUnicos = new Set(postulacionesEmpresa.map(p => p.candidato_id)).size;
         const postulacionesPendientes = postulacionesEmpresa.filter(p => p.estado === 'postulado').length;
         
@@ -57,7 +62,8 @@ export default function EmpresaDashboard() {
           candidatosUnicos,
           postulacionesPendientes,
           totalBusquedas: busquedasEmpresa.length,
-          totalPostulaciones: postulacionesEmpresa.length
+          totalPostulaciones: postulacionesEmpresa.length,
+          estadosEncontrados: busquedasEmpresa.map(b => b.estado)
         });
         
         setStats({
