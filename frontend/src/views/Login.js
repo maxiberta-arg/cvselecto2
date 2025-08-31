@@ -62,12 +62,7 @@ export default function Login() {
               </div>
             </div>
             <h2 className="fw-bold text-primary mb-1" style={{ letterSpacing: '1px', fontFamily: 'inherit' }}>Iniciar Sesión</h2>
-            <div className="text-muted small mb-3">
-              <strong>Usuarios de prueba:</strong><br/>
-              Admin: admin@cvselecto.com / admin123<br/>
-              Candidato: juan.candidato@cvselecto.com / password<br/>
-              Empresa: cualquier email con @empresa / empresa123
-            </div>
+            <p className="text-muted small mb-3">Accede a tu cuenta para continuar</p>
           </div>
           <form onSubmit={handleSubmit}>
             {error && (

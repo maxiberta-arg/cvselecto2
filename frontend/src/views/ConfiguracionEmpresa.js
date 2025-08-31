@@ -16,6 +16,8 @@ export default function ConfiguracionEmpresa() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [touchedFields, setTouchedFields] = useState({});
   const [previewLogo, setPreviewLogo] = useState(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [logoToDelete, setLogoToDelete] = useState(false);
 
   const [formData, setFormData] = useState({
     // Datos del usuario
@@ -48,12 +50,13 @@ export default function ConfiguracionEmpresa() {
       setLoading(true);
       setError(null);
       
-      const empresaResponse = await api.get(`/empresas/by-user/${user.id}`);
-      const empresa = empresaResponse.data;
-      
-      setEmpresaId(empresa.id);
-
-      const initialData = {
+        const empresaResponse = await api.get(`/empresas/by-user/${user.id}`);
+        const empresa = empresaResponse.data;
+        
+        // Debug: Log para verificar el logo recibido
+        console.log('Logo recibido del backend:', empresa.logo_path);
+        
+        setEmpresaId(empresa.id);      const initialData = {
         name: user.name || '',
         email: user.email || '',
         password: '',
@@ -68,11 +71,18 @@ export default function ConfiguracionEmpresa() {
         empleados_cantidad: empresa.tamaño_empresa || '',
         sitio_web: empresa.sitio_web || '',
         linkedin_url: empresa.linkedin_url || '',
-        logo: empresa.logo || null,
+        logo: empresa.logo_path || null, // Cambiado de logo a logo_path
       };
 
       setFormData(initialData);
       setOriginalData({ ...initialData });
+      
+      // Establecer preview del logo actual si existe
+      if (empresa.logo_path) {
+        // Agregar timestamp para evitar caché del navegador
+        const logoUrl = empresa.logo_path + '?t=' + new Date().getTime();
+        setPreviewLogo(logoUrl);
+      }
       
     } catch (err) {
       console.error('Error al cargar configuración:', err);
@@ -232,6 +242,69 @@ export default function ConfiguracionEmpresa() {
     return null;
   };
 
+  // Funciones para manejar drag & drop del logo
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = e.dataTransfer.files;
+    if (files && files[0]) {
+      handleLogoFile(files[0]);
+    }
+  };
+
+  const handleLogoFile = (file) => {
+    // Limpiar errores previos
+    setFieldErrors(prev => ({ ...prev, logo: '' }));
+    
+    // Validaciones
+    if (file.size > 5 * 1024 * 1024) { // Aumentamos a 5MB
+      setFieldErrors(prev => ({ ...prev, logo: 'El logo no puede superar los 5MB' }));
+      return;
+    }
+    
+    if (!file.type.startsWith('image/')) {
+      setFieldErrors(prev => ({ ...prev, logo: 'Solo se permiten archivos de imagen (JPG, PNG, GIF, SVG)' }));
+      return;
+    }
+
+    // Crear preview
+    const reader = new FileReader();
+    reader.onload = (e) => setPreviewLogo(e.target.result);
+    reader.readAsDataURL(file);
+
+    // Actualizar formData
+    setFormData(prev => ({
+      ...prev,
+      logo: file
+    }));
+
+    setLogoToDelete(false);
+  };
+
+  const removeLogo = () => {
+    setPreviewLogo(null);
+    setFormData(prev => ({
+      ...prev,
+      logo: null
+    }));
+    setLogoToDelete(true);
+    
+    // Limpiar input file
+    const fileInput = document.querySelector('input[name="logo"]');
+    if (fileInput) fileInput.value = '';
+  };
+
   const handleInputChange = (e) => {
     const { name, value, type, checked, files } = e.target;
     
@@ -246,18 +319,8 @@ export default function ConfiguracionEmpresa() {
       setFieldErrors(prev => ({ ...prev, [name]: '' }));
       
       if (name === 'logo') {
-        if (file.size > 2048 * 1024) {
-          setFieldErrors(prev => ({ ...prev, [name]: 'El logo no puede superar los 2MB' }));
-          return;
-        }
-        if (!file.type.startsWith('image/')) {
-          setFieldErrors(prev => ({ ...prev, [name]: 'Solo se permiten archivos de imagen' }));
-          return;
-        }
-        
-        const reader = new FileReader();
-        reader.onload = (e) => setPreviewLogo(e.target.result);
-        reader.readAsDataURL(file);
+        handleLogoFile(file);
+        return;
       }
       
       newValue = file;
@@ -287,9 +350,14 @@ export default function ConfiguracionEmpresa() {
     try {
       let response;
       
-      // Si hay logo (archivo), usar FormData
-      if (formData.logo && typeof formData.logo === 'object') {
+      // Si hay logo (archivo o eliminación), usar FormData
+      if ((formData.logo && typeof formData.logo === 'object') || logoToDelete) {
         const formDataToSend = new FormData();
+        
+        // Agregar flag de eliminación de logo si corresponde
+        if (logoToDelete) {
+          formDataToSend.append('remove_logo', '1');
+        }
         
         // Datos del usuario
         if (formData.name && formData.name.trim()) {
@@ -431,6 +499,7 @@ export default function ConfiguracionEmpresa() {
   }
 
   return (
+    <>
     <div className="container-fluid py-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
       <div className="container">
         
@@ -685,21 +754,131 @@ export default function ConfiguracionEmpresa() {
                     <div className="form-text">Ingrese el número aproximado de empleados de su empresa</div>
                   </div>
 
+                  {/* Logo de la Empresa - Sección Mejorada */}
                   <div className="mb-4">
-                    <label className="form-label fw-semibold">Logo de la Empresa</label>
-                    <input
-                      type="file"
-                      name="logo"
-                      className="form-control"
-                      onChange={handleInputChange}
-                      accept="image/*"
-                    />
-                    <div className="form-text">Formatos permitidos: JPG, PNG, GIF. Tamaño máximo: 2MB</div>
-                    {previewLogo && (
-                      <div className="mt-2">
-                        <img src={previewLogo} alt="Preview" className="img-thumbnail" style={{ maxWidth: '200px', maxHeight: '200px' }} />
+                    <label className="form-label fw-semibold mb-3">
+                      <i className="bi bi-image me-2 text-primary"></i>
+                      Logo de la Empresa
+                    </label>
+                    
+                    <div className="logo-upload-container">
+                      {/* Area de upload con drag & drop */}
+                      <div 
+                        className={`logo-upload-area ${isDragOver ? 'drag-over' : ''} ${fieldErrors.logo ? 'error' : ''}`}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        onClick={() => document.getElementById('logo-input').click()}
+                      >
+                        {previewLogo ? (
+                          // Preview del logo
+                          <div className="logo-preview-container">
+                            <div className="logo-preview-wrapper">
+                              <img 
+                                src={previewLogo} 
+                                alt="Logo de la empresa" 
+                                className="logo-preview-image"
+                              />
+                              <div className="logo-overlay">
+                                <div className="logo-actions">
+                                  <button
+                                    type="button"
+                                    className="btn btn-sm btn-outline-light me-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      document.getElementById('logo-input').click();
+                                    }}
+                                    title="Cambiar logo"
+                                  >
+                                    <i className="bi bi-pencil"></i>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn btn-sm btn-outline-danger"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      removeLogo();
+                                    }}
+                                    title="Eliminar logo"
+                                  >
+                                    <i className="bi bi-trash"></i>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="logo-info">
+                              <small className="text-muted">
+                                <i className="bi bi-info-circle me-1"></i>
+                                Haz clic para cambiar o arrastra una nueva imagen
+                              </small>
+                            </div>
+                          </div>
+                        ) : (
+                          // Area de upload vacía
+                          <div className="logo-upload-empty">
+                            <div className="upload-icon">
+                              <i className="bi bi-cloud-upload display-4 text-primary"></i>
+                            </div>
+                            <div className="upload-text">
+                              <p className="mb-2 fw-semibold">Arrastra tu logo aquí</p>
+                              <p className="mb-0 text-muted small">
+                                o <span className="text-primary">haz clic para seleccionar</span>
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    )}
+
+                      {/* Input file oculto */}
+                      <input
+                        id="logo-input"
+                        type="file"
+                        name="logo"
+                        className="d-none"
+                        onChange={handleInputChange}
+                        accept="image/*"
+                      />
+
+                      {/* Información y especificaciones */}
+                      <div className="logo-specifications mt-3">
+                        <div className="row">
+                          <div className="col-md-6">
+                            <div className="spec-item">
+                              <i className="bi bi-file-earmark-image text-success me-2"></i>
+                              <span className="small text-muted">
+                                Formatos: <strong>JPG, PNG, GIF, SVG</strong>
+                              </span>
+                            </div>
+                          </div>
+                          <div className="col-md-6">
+                            <div className="spec-item">
+                              <i className="bi bi-hdd text-info me-2"></i>
+                              <span className="small text-muted">
+                                Tamaño máximo: <strong>5MB</strong>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="row mt-2">
+                          <div className="col-12">
+                            <div className="spec-item">
+                              <i className="bi bi-aspect-ratio text-warning me-2"></i>
+                              <span className="small text-muted">
+                                Recomendado: <strong>Formato cuadrado (1:1)</strong> para mejor visualización
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Error de validación */}
+                      {fieldErrors.logo && (
+                        <div className="invalid-feedback d-block mt-2">
+                          <i className="bi bi-exclamation-triangle me-1"></i>
+                          {fieldErrors.logo}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="d-flex justify-content-end gap-2">
@@ -739,5 +918,162 @@ export default function ConfiguracionEmpresa() {
 
       </div>
     </div>
+    
+    <style jsx>{`
+      .logo-upload-container {
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        background: #f8f9fa;
+        padding: 1rem;
+      }
+
+      .logo-upload-area {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 2rem 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: white;
+        min-height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+
+      .logo-upload-area:hover {
+        border-color: #007bff;
+        background: #f8f9ff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+      }
+
+      .logo-upload-area.drag-over {
+        border-color: #28a745;
+        background: #f8fff9;
+        transform: scale(1.02);
+      }
+
+      .logo-upload-area.error {
+        border-color: #dc3545;
+        background: #fff5f5;
+      }
+
+      .logo-upload-empty {
+        width: 100%;
+      }
+
+      .upload-icon {
+        margin-bottom: 1rem;
+        opacity: 0.7;
+      }
+
+      .upload-text p {
+        margin: 0.25rem 0;
+      }
+
+      .logo-preview-container {
+        width: 100%;
+        max-width: 300px;
+      }
+
+      .logo-preview-wrapper {
+        position: relative;
+        display: inline-block;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        background: white;
+        padding: 0.5rem;
+      }
+
+      .logo-preview-image {
+        width: 200px;
+        height: 200px;
+        object-fit: contain;
+        border-radius: 6px;
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+      }
+
+      .logo-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border-radius: 8px;
+      }
+
+      .logo-preview-wrapper:hover .logo-overlay {
+        opacity: 1;
+      }
+
+      .logo-actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .logo-info {
+        margin-top: 1rem;
+        text-align: center;
+      }
+
+      .logo-specifications {
+        background: white;
+        border-radius: 6px;
+        padding: 0.75rem;
+        border: 1px solid #e9ecef;
+      }
+
+      .spec-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.25rem;
+      }
+
+      .spec-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .spec-item strong {
+        color: #495057;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .logo-upload-area {
+          padding: 1.5rem 1rem;
+          min-height: 160px;
+        }
+
+        .logo-preview-image {
+          width: 150px;
+          height: 150px;
+        }
+
+        .upload-icon i {
+          font-size: 2.5rem !important;
+        }
+      }
+
+      @media (max-width: 576px) {
+        .logo-specifications .row {
+          margin: 0;
+        }
+
+        .logo-specifications .col-md-6 {
+          padding: 0.25rem 0;
+        }
+      }
+    `}</style>
+    </>
   );
 }

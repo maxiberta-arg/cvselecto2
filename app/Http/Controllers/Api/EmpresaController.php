@@ -134,7 +134,7 @@ class EmpresaController extends Controller
             'linkedin_url' => 'nullable|url|max:255',
             'sector' => 'nullable|string|max:100',
             'tamaño_empresa' => 'nullable|integer|min:1|max:500000',
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:5120', // 5MB máximo
             
             // Campos del usuario
             'user_name' => 'nullable|string|min:2|max:255',
@@ -196,8 +196,15 @@ class EmpresaController extends Controller
         
         \Log::info('Datos finales para actualizar empresa:', $data);
         
-        // Procesar logo si viene en la request
-        if ($request->hasFile('logo')) {
+        // Manejar eliminación del logo si se solicita
+        if ($request->has('remove_logo') && $request->input('remove_logo') === '1') {
+            if ($empresa->logo_path) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $empresa->logo_path));
+            }
+            $data['logo_path'] = null;
+        }
+        // Procesar logo nuevo si viene en la request
+        else if ($request->hasFile('logo')) {
             // Eliminar logo anterior si existe
             if ($empresa->logo_path) {
                 Storage::disk('public')->delete(str_replace('/storage/', '', $empresa->logo_path));
