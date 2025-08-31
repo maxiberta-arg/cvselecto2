@@ -35,7 +35,8 @@ export default function Navbar() {
     { to: '/empresa', label: 'Dashboard', icon: 'bi bi-building' },
     { to: '/configuracion-empresa', label: 'Configuración', icon: 'bi bi-gear' },
     { to: '/mis-busquedas-laborales', label: 'Búsquedas', icon: 'bi bi-clipboard-plus' },
-    { to: '/gestion-candidatos', label: 'Candidatos', icon: 'bi bi-people-fill' },
+    { to: '/gestion-candidatos', label: 'Postulaciones', icon: 'bi bi-list-check' },
+    { to: '/pool-candidatos', label: 'Pool Candidatos', icon: 'bi bi-collection' },
     { to: '/reportes-empresa', label: 'Reportes', icon: 'bi bi-bar-chart' }
   ];
   // Secciones con iconos y color activo para candidato

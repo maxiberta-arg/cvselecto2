@@ -13,6 +13,15 @@ use App\Http\Controllers\Api\PostulacionController;
 Route::post('login', [AuthController::class, 'login']);
 Route::post('register', [AuthController::class, 'register']);
 
+// Ruta de prueba para verificar que el servidor funciona
+Route::get('test', function () {
+    return response()->json([
+        'message' => 'API funcionando correctamente',
+        'timestamp' => now(),
+        'version' => '1.0.0'
+    ]);
+});
+
 // Rutas que requieren autenticación
 Route::middleware('auth:sanctum')->group(function () {
     // Autenticación
@@ -27,23 +36,51 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('candidatos-by-busqueda/{busquedaId}', [CandidatoController::class, 'byBusqueda']);
     Route::get('candidatos-estadisticas', [CandidatoController::class, 'estadisticas']);
     
-    // Empresas
+    // Empresas - Rutas básicas
     Route::apiResource('empresas', EmpresaController::class);
     Route::get('empresas/by-user/{userId}', [EmpresaController::class, 'getByUser']);
-    Route::patch('empresas/{empresa}/verification', [EmpresaController::class, 'toggleVerification']);
-    Route::get('empresas-pending-verification', [EmpresaController::class, 'pendingVerification']);
     
-    // Búsquedas laborales
-    Route::apiResource('busquedas-laborales', BusquedaLaboralController::class);
+    // Empresas - Rutas que requieren empresa verificada con rate limiting
+    Route::middleware(['empresa.verificada'])->group(function () {
+        // Creación de búsquedas laborales (usa el rate limiting global de 60/min)
+        Route::post('busquedas-laborales', [BusquedaLaboralController::class, 'store']);
+        
+        // Gestión de postulaciones
+        Route::patch('postulaciones/{id}/estado', [PostulacionController::class, 'cambiarEstado'])
+             ->middleware('empresa.ownership:postulacion');
+        Route::patch('postulaciones/{id}/calificar', [PostulacionController::class, 'calificar'])
+             ->middleware('empresa.ownership:postulacion');
+             
+        // Pool de candidatos empresarial
+        Route::prefix('pool-candidatos')->name('pool.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Api\EmpresaPoolController::class, 'index'])->name('index');
+            Route::get('/estadisticas', [App\Http\Controllers\Api\EmpresaPoolController::class, 'estadisticas'])->name('estadisticas');
+            Route::post('/agregar-existente', [App\Http\Controllers\Api\EmpresaPoolController::class, 'agregarExistente'])->name('agregar-existente');
+            Route::post('/crear-candidato', [App\Http\Controllers\Api\EmpresaPoolController::class, 'crearYAgregar'])->name('crear-candidato');
+            Route::put('/candidato/{candidato_id}', [App\Http\Controllers\Api\EmpresaPoolController::class, 'actualizar'])->name('actualizar');
+            Route::delete('/candidato/{candidato_id}', [App\Http\Controllers\Api\EmpresaPoolController::class, 'eliminar'])->name('eliminar');
+            Route::post('/importar-postulaciones', [App\Http\Controllers\Api\EmpresaPoolController::class, 'importarDesdePostulaciones'])->name('importar');
+        });
+    });
     
-    // Postulaciones
+    // Empresas - Rutas con ownership pero sin restricción de verificación
+    Route::middleware('empresa.ownership:busqueda')->group(function () {
+        Route::get('busquedas-laborales/{busquedas_laborale}', [BusquedaLaboralController::class, 'show']);
+        Route::put('busquedas-laborales/{busquedas_laborale}', [BusquedaLaboralController::class, 'update']);
+        Route::delete('busquedas-laborales/{busquedas_laborale}', [BusquedaLaboralController::class, 'destroy']);
+    });
+    
+    // Admin only routes
+    Route::middleware('role:admin')->group(function () {
+        Route::patch('empresas/{empresa}/verification', [EmpresaController::class, 'toggleVerification']);
+        Route::get('empresas-pending-verification', [EmpresaController::class, 'pendingVerification']);
+    });
+    
+    // Búsquedas laborales - Rutas públicas
+    Route::get('busquedas-laborales', [BusquedaLaboralController::class, 'index']);
+    
+    // Postulaciones 
     Route::apiResource('postulaciones', PostulacionController::class);
     Route::get('postulaciones/empresa/{empresaId}', [PostulacionController::class, 'byEmpresa']);
     Route::get('postulaciones/empresa/{empresaId}/estadisticas', [PostulacionController::class, 'estadisticasEmpresa']);
-    Route::patch('postulaciones/{id}/estado', [PostulacionController::class, 'cambiarEstado']);
-    Route::patch('postulaciones/{id}/calificar', [PostulacionController::class, 'calificar']);
-    Route::get('postulaciones/empresa/{empresaId}', [PostulacionController::class, 'byEmpresa']);
-    Route::get('postulaciones/empresa/{empresaId}/estadisticas', [PostulacionController::class, 'estadisticasEmpresa']);
-    Route::patch('postulaciones/{id}/estado', [PostulacionController::class, 'cambiarEstado']);
-    Route::patch('postulaciones/{id}/calificar', [PostulacionController::class, 'calificar']);
 });

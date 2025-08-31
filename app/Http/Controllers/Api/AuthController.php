@@ -172,13 +172,30 @@ class AuthController extends Controller
         // Crear nuevo token
         $token = $user->createToken('api-token')->plainTextToken;
 
+        $userData = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'rol' => $user->rol,
+        ];
+
+        // Incluir información adicional según el rol
+        if ($user->rol === 'empresa') {
+            $empresa = $user->empresa;
+            if ($empresa) {
+                $userData['empresa'] = [
+                    'id' => $empresa->id,
+                    'razon_social' => $empresa->razon_social,
+                    'estado_verificacion' => $empresa->estado_verificacion,
+                    'cuit' => $empresa->cuit,
+                    'sector' => $empresa->sector,
+                    'tamaño_empresa' => $empresa->tamaño_empresa,
+                ];
+            }
+        }
+
         return response()->json([
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'rol' => $user->rol,
-            ],
+            'user' => $userData,
             'token' => $token
         ]);
     }
@@ -235,7 +252,43 @@ class AuthController extends Controller
      */
     public function user(Request $request)
     {
-        return response()->json($request->user());
+        $user = $request->user();
+        
+        $userData = [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'rol' => $user->rol,
+            'email_verified_at' => $user->email_verified_at,
+            'created_at' => $user->created_at,
+            'updated_at' => $user->updated_at,
+        ];
+
+        // Incluir información adicional según el rol
+        if ($user->rol === 'empresa') {
+            $empresa = $user->empresa;
+            if ($empresa) {
+                $userData['empresa'] = [
+                    'id' => $empresa->id,
+                    'razon_social' => $empresa->razon_social,
+                    'estado_verificacion' => $empresa->estado_verificacion,
+                    'cuit' => $empresa->cuit,
+                    'sector' => $empresa->sector,
+                    'tamaño_empresa' => $empresa->tamaño_empresa,
+                ];
+            }
+        } elseif ($user->rol === 'candidato') {
+            $candidato = $user->candidato;
+            if ($candidato) {
+                $userData['candidato'] = [
+                    'id' => $candidato->id,
+                    'nombre' => $candidato->nombre,
+                    'apellido' => $candidato->apellido,
+                ];
+            }
+        }
+
+        return response()->json($userData);
     }
 
     /**

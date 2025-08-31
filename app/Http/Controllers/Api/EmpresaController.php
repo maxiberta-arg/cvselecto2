@@ -58,6 +58,16 @@ class EmpresaController extends Controller
      */
     public function getByUser(string $userId)
     {
+        $currentUser = auth()->user();
+        
+        // Solo el propio usuario o un admin pueden ver los datos de la empresa
+        if ($currentUser->id != $userId && $currentUser->rol !== 'admin') {
+            return response()->json([
+                'message' => 'No autorizado para ver esta empresa.',
+                'code' => 'FORBIDDEN'
+            ], 403);
+        }
+        
         $empresa = Empresa::where('user_id', $userId)
                          ->with(['user', 'busquedasLaborales'])
                          ->firstOrFail();
