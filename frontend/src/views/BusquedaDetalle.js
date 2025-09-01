@@ -28,14 +28,23 @@ export default function BusquedaDetalle() {
       const busquedaResponse = await api.get(`/busquedas-laborales/${id}`);
       setBusqueda(busquedaResponse.data);
 
-      // Cargar postulaciones de esta búsqueda
-      const postulacionesResponse = await api.get('/postulaciones');
+      // Cargar postulaciones de esta búsqueda con timestamp para evitar cache
+      const timestamp = Date.now();
+      const postulacionesResponse = await api.get(`/postulaciones?_t=${timestamp}`);
       const todasPostulaciones = postulacionesResponse.data;
       
       // Filtrar postulaciones para esta búsqueda específica
       const postulacionesBusqueda = todasPostulaciones.filter(
         p => p.busqueda_id === parseInt(id)
       );
+      
+      // Debug info en development
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔍 Debug BusquedaDetalle:', {
+          busquedaId: id,
+          postulacionesEsta: postulacionesBusqueda.length
+        });
+      }
       
       setPostulaciones(postulacionesBusqueda);
 
@@ -146,6 +155,15 @@ export default function BusquedaDetalle() {
     ? postulaciones 
     : postulaciones.filter(p => p.estado === filtroEstado);
 
+  // Debug específico para postulaciones filtradas (solo en development)
+  if (process.env.NODE_ENV === 'development' && postulacionesFiltradas.length !== postulaciones.length) {
+    console.log('Debug postulacionesFiltradas:', {
+      filtroEstado,
+      postulacionesOriginales: postulaciones.length,
+      postulacionesFiltradas: postulacionesFiltradas.length
+    });
+  }
+
   if (loading) {
     return (
       <div className="container-fluid py-5">
@@ -190,7 +208,19 @@ export default function BusquedaDetalle() {
   }
 
   return (
-    <div className="container-fluid py-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
+    <>
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          .spin {
+            animation: spin 1s linear infinite;
+          }
+        `}
+      </style>
+      <div className="container-fluid py-4" style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
       <div className="container">
         
         {/* Mensaje de éxito */}
@@ -235,6 +265,15 @@ export default function BusquedaDetalle() {
                     </div>
                   </div>
                   <div className="d-flex gap-2">
+                    <button 
+                      className="btn btn-success btn-sm"
+                      onClick={cargarDatos}
+                      disabled={loading}
+                      title="Actualizar datos"
+                    >
+                      <i className={`bi ${loading ? 'bi-arrow-repeat spin' : 'bi-arrow-clockwise'} me-1`}></i>
+                      Actualizar
+                    </button>
                     <button 
                       className="btn btn-light btn-sm"
                       onClick={() => navigate(`/editar-busqueda-laboral/${busqueda.id}`)}
@@ -393,11 +432,13 @@ export default function BusquedaDetalle() {
                                   </div>
                                   <div>
                                     <h6 className="fw-bold mb-1">
-                                      {postulacion.candidato?.nombre} {postulacion.candidato?.apellido}
+                                      {/* Usa nombre del candidato o del usuario como fallback */}
+                                      {postulacion.candidato?.nombre || postulacion.candidato?.user?.name || 'Candidato'}
+                                      {postulacion.candidato?.apellido ? ` ${postulacion.candidato?.apellido}` : ''}
                                     </h6>
                                     <p className="text-muted mb-1 small">
                                       <i className="bi bi-envelope me-1"></i>
-                                      {postulacion.candidato?.email}
+                                      {postulacion.candidato?.email || postulacion.candidato?.user?.email || 'Email no disponible'}
                                     </p>
                                     <small className="text-muted">
                                       <i className="bi bi-calendar me-1"></i>
@@ -572,5 +613,6 @@ export default function BusquedaDetalle() {
 
       </div>
     </div>
+    </>
   );
 }

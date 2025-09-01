@@ -24,7 +24,7 @@ class PostulacionController extends Controller
      */
     public function index()
     {
-        return response()->json(\App\Models\Postulacion::with(['busquedaLaboral', 'candidato', 'entrevistas'])->get());
+        return response()->json(\App\Models\Postulacion::with(['busquedaLaboral', 'candidato.user', 'entrevistas'])->get());
     }
 
     /**
@@ -57,8 +57,20 @@ class PostulacionController extends Controller
      */
     public function store(StorePostulacionRequest $request)
     {
-    $postulacion = \App\Models\Postulacion::create($request->validated());
-    return response()->json($postulacion, 201);
+        // Verificar si ya existe una postulación para este candidato y búsqueda
+        $existente = \App\Models\Postulacion::where('busqueda_id', $request->busqueda_id)
+                                           ->where('candidato_id', $request->candidato_id)
+                                           ->first();
+        
+        if ($existente) {
+            return response()->json([
+                'error' => 'El candidato ya se ha postulado a esta búsqueda laboral',
+                'postulacion' => $existente
+            ], 422);
+        }
+
+        $postulacion = \App\Models\Postulacion::create($request->validated());
+        return response()->json($postulacion->load(['candidato.user', 'busquedaLaboral']), 201);
     }
 
     /**

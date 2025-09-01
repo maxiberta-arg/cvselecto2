@@ -25,7 +25,7 @@ class CandidatoController extends Controller
     public function index()
     {
         try {
-            $query = \App\Models\Candidato::query();
+            $query = \App\Models\Candidato::with('user'); // ← AGREGAMOS with('user')
             
             // Si hay parámetro de búsqueda, filtrar candidatos
             if (request()->has('search') && !empty(request('search'))) {
@@ -36,7 +36,12 @@ class CandidatoController extends Controller
                     $q->where('nombre', 'LIKE', '%' . $searchTerm . '%')
                       ->orWhere('apellido', 'LIKE', '%' . $searchTerm . '%')
                       ->orWhere('email', 'LIKE', '%' . $searchTerm . '%')
-                      ->orWhere('telefono', 'LIKE', '%' . $searchTerm . '%');
+                      ->orWhere('telefono', 'LIKE', '%' . $searchTerm . '%')
+                      // AGREGAMOS búsqueda en la tabla users
+                      ->orWhereHas('user', function($userQuery) use ($searchTerm) {
+                          $userQuery->where('name', 'LIKE', '%' . $searchTerm . '%')
+                                   ->orWhere('email', 'LIKE', '%' . $searchTerm . '%');
+                      });
                 });
             }
             
