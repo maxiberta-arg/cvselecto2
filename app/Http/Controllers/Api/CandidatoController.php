@@ -397,6 +397,8 @@ class CandidatoController extends Controller
             $file = $request->file('cv');
             $path = $file->store('cvs', 'public');
             $data['cv_path'] = '/storage/' . $path;
+            // Eliminar el cv del array para evitar que se guarde como campo cv
+            unset($data['cv']);
         }
         
         $candidato->update($data);

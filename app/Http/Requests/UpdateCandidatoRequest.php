@@ -33,6 +33,7 @@ class UpdateCandidatoRequest extends FormRequest
             'bio' => 'nullable|string|max:1000',
             'habilidades' => 'nullable|string|max:500',
             'linkedin' => 'nullable|url|max:255',
+            'linkedin_url' => 'nullable|url|max:255',
             'experiencia_resumida' => 'nullable|string|max:1000',
             'educacion_resumida' => 'nullable|string|max:1000',
             

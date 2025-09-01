@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 import { toast } from 'react-toastify';
 import './EditarCandidato.css';
 
 const EditarCandidato = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -35,6 +36,7 @@ const EditarCandidato = () => {
   });
 
   const [previewAvatar, setPreviewAvatar] = useState(null);
+  const [currentCV, setCurrentCV] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
 
   // Opciones para selects
@@ -67,23 +69,8 @@ const EditarCandidato = () => {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`http://localhost:8000/api/candidatos/${id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error('Candidato no encontrado');
-          } else if (response.status === 403) {
-            throw new Error('No tienes permisos para editar este candidato');
-          }
-          throw new Error('Error al cargar los datos del candidato');
-        }
-
-        const candidato = await response.json();
+        const response = await api.get(`/candidatos/${id}`);
+        const candidato = response.data;
         
         setFormData({
           nombre: candidato.nombre || '',
@@ -108,22 +95,31 @@ const EditarCandidato = () => {
         });
 
         if (candidato.avatar) {
-          setPreviewAvatar(candidato.avatar);
+          // Construir la URL completa del avatar
+          const avatarUrl = candidato.avatar.startsWith('http') ? candidato.avatar : `http://localhost:8000${candidato.avatar}`;
+          setPreviewAvatar(avatarUrl);
         }
+
+        // Verificar si tiene CV guardado
+        if (candidato.cv_path) {
+          setCurrentCV(candidato.cv_path);
+        }
+
+        console.log('Candidato loaded:', candidato);
 
       } catch (err) {
         console.error('Error loading candidato:', err);
-        setError(err.message);
-        toast.error(err.message);
+        setError(err.message || 'Error al cargar los datos del candidato');
+        toast.error(err.message || 'Error al cargar los datos del candidato');
       } finally {
         setLoading(false);
       }
     };
 
-    if (id && token) {
+    if (id) {
       loadCandidato();
     }
-  }, [id, token]);
+  }, [id]);
 
   // Manejar cambios en inputs
   const handleInputChange = (e) => {
@@ -210,47 +206,61 @@ const EditarCandidato = () => {
       // Agregar todos los campos del formulario
       Object.keys(formData).forEach(key => {
         if (formData[key] !== null && formData[key] !== '') {
-          if (key === 'avatar' || key === 'cv') {
-            if (formData[key] instanceof File) {
-              formDataToSend.append(key, formData[key]);
-            }
-          } else {
-            formDataToSend.append(key, formData[key]);
+          // No agregar archivos vacíos
+          if ((key === 'avatar' || key === 'cv') && !(formData[key] instanceof File)) {
+            return;
           }
+          formDataToSend.append(key, formData[key]);
         }
       });
 
       // Método PUT para actualización
       formDataToSend.append('_method', 'PUT');
 
-      const response = await fetch(`http://localhost:8000/api/candidatos/${id}`, {
-        method: 'POST', // Laravel necesita POST para multipart con _method
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
-        body: formDataToSend
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        if (errorData.errors) {
-          setFieldErrors(errorData.errors);
-          throw new Error('Hay errores en el formulario');
-        }
-        throw new Error(errorData.message || 'Error al actualizar el candidato');
+      console.log('FormData being sent:');
+      for (let pair of formDataToSend.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
       }
 
-      const updatedCandidato = await response.json();
+      const response = await api.post(`/candidatos/${id}`, formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
       toast.success('Candidato actualizado correctamente');
       
       // Redirigir a la gestión de candidatos
-      navigate('/empresa/candidatos');
+      navigate('/gestion-candidatos');
 
     } catch (err) {
       console.error('Error updating candidato:', err);
-      setError(err.message);
-      toast.error(err.message);
+      
+      if (err.response?.status === 422) {
+        console.error('Validation errors:', err.response.data);
+        
+        // Manejar errores específicos de validación
+        if (err.response.data.errors) {
+          const errorMessages = Object.entries(err.response.data.errors).map(([field, messages]) => {
+            return `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`;
+          }).join('; ');
+          
+          setError('Errores de validación: ' + errorMessages);
+          toast.error('Errores de validación: ' + errorMessages);
+        } else if (err.response.data.message) {
+          setError(err.response.data.message);
+          toast.error(err.response.data.message);
+        } else {
+          setError('Error de validación en el formulario');
+          toast.error('Error de validación en el formulario');
+        }
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+        toast.error(err.response.data.message);
+      } else {
+        setError(err.message || 'Error al actualizar el candidato');
+        toast.error(err.message || 'Error al actualizar el candidato');
+      }
     } finally {
       setSaving(false);
     }
@@ -275,7 +285,7 @@ const EditarCandidato = () => {
           <p>{error}</p>
           <button 
             className="btn-secondary" 
-            onClick={() => navigate('/empresa/candidatos')}
+            onClick={() => navigate('/gestion-candidatos')}
           >
             Volver a Candidatos
           </button>
@@ -290,7 +300,7 @@ const EditarCandidato = () => {
         <h2>Editar Candidato</h2>
         <button 
           className="btn-secondary" 
-          onClick={() => navigate('/empresa/candidatos')}
+          onClick={() => navigate('/gestion-candidatos')}
           disabled={saving}
         >
           Volver
@@ -610,6 +620,16 @@ const EditarCandidato = () => {
 
             <div className="form-group">
               <label htmlFor="cv">CV (PDF)</label>
+              {currentCV && (
+                <div className="current-cv">
+                  <p>CV actual: <strong>{currentCV.split('/').pop()}</strong></p>
+                  <a href={`http://localhost:8000${currentCV}`} target="_blank" rel="noopener noreferrer" className="cv-link">
+                    📄 Ver/Descargar CV
+                  </a>
+                  <br />
+                  <small>Selecciona un archivo para reemplazar el CV actual</small>
+                </div>
+              )}
               <input
                 type="file"
                 id="cv"
@@ -629,7 +649,7 @@ const EditarCandidato = () => {
           <button 
             type="button" 
             className="btn-secondary"
-            onClick={() => navigate('/empresa/candidatos')}
+            onClick={() => navigate('/gestion-candidatos')}
             disabled={saving}
           >
             Cancelar
