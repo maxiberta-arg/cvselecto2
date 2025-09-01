@@ -55,9 +55,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::prefix('pool-candidatos')->name('pool.')->group(function () {
             Route::get('/', [App\Http\Controllers\Api\EmpresaPoolController::class, 'index'])->name('index');
             Route::get('/estadisticas', [App\Http\Controllers\Api\EmpresaPoolController::class, 'estadisticas'])->name('estadisticas');
+            Route::get('/tags', [App\Http\Controllers\Api\EmpresaPoolController::class, 'getTags'])->name('tags');
+            Route::get('/candidato/{empresaCandidatoId}', [App\Http\Controllers\Api\EmpresaPoolController::class, 'show'])->name('show');
             Route::post('/agregar-existente', [App\Http\Controllers\Api\EmpresaPoolController::class, 'agregarExistente'])->name('agregar-existente');
             Route::post('/crear-candidato', [App\Http\Controllers\Api\EmpresaPoolController::class, 'crearYAgregar'])->name('crear-candidato');
-            Route::put('/candidato/{candidato_id}', [App\Http\Controllers\Api\EmpresaPoolController::class, 'actualizar'])->name('actualizar');
+            Route::put('/candidato/{candidato_id}', [App\Http\Controllers\Api\EmpresaPoolController::class, 'updatePoolInfo'])->name('actualizar');
             Route::delete('/candidato/{candidato_id}', [App\Http\Controllers\Api\EmpresaPoolController::class, 'eliminar'])->name('eliminar');
             Route::post('/importar-postulaciones', [App\Http\Controllers\Api\EmpresaPoolController::class, 'importarDesdePostulaciones'])->name('importar');
         });

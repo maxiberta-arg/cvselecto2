@@ -3,6 +3,12 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { toast } from 'react-toastify';
 
+// Importar componentes nuevos
+import DetalleCandidato from '../components/DetalleCandidato';
+import EdicionRapidaCandidato from '../components/EdicionRapidaCandidato';
+import TarjetaCandidatoResponsiva from '../components/TarjetaCandidatoResponsiva';
+import VincularBusquedas from '../components/VincularBusquedas';
+
 export default function PoolCandidatos() {
   const { user } = useAuth();
   
@@ -15,14 +21,39 @@ export default function PoolCandidatos() {
   const [mostrarModalAgregar, setMostrarModalAgregar] = useState(false);
   const [candidatosPotenciales, setCandidatosPotenciales] = useState([]);
   
+  // Estado de paginación
+  const [paginacion, setPaginacion] = useState({
+    current_page: 1,
+    per_page: 15,
+    total: 0,
+    last_page: 1,
+    from: 0,
+    to: 0
+  });
+  
   // Filtros
   const [filtros, setFiltros] = useState({
     estado_interno: '',
     origen: '',
     puntuacion_min: '',
     puntuacion_max: '',
-    search: ''
+    search: '',
+    tags: [],
+    fecha_incorporacion_desde: '',
+    fecha_incorporacion_hasta: '',
+    page: 1,
+    per_page: 15
   });
+
+  // Estado para filtros avanzados
+  const [mostrarFiltrosAvanzados, setMostrarFiltrosAvanzados] = useState(false);
+  const [tagsDisponibles, setTagsDisponibles] = useState([]);
+
+  // Estados para modals nuevos
+  const [candidatoSeleccionado, setCandidatoSeleccionado] = useState(null);
+  const [mostrarDetalle, setMostrarDetalle] = useState(false);
+  const [mostrarEdicionRapida, setMostrarEdicionRapida] = useState(false);
+  const [mostrarVincularBusquedas, setMostrarVincularBusquedas] = useState(false);
 
   // Datos del formulario
   const [formData, setFormData] = useState({
@@ -49,34 +80,68 @@ export default function PoolCandidatos() {
   // Cargar datos al montar el componente
   useEffect(() => {
     if (user && user.rol === 'empresa') {
-      cargarPoolCandidatos();
+      cargarPoolCandidatos(false);
       cargarEstadisticas();
+      cargarTagsDisponibles();
     }
   }, [user]);
 
-  // Recargar cuando cambien los filtros
+  // Recargar cuando cambien los filtros (excepto page)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (user && user.rol === 'empresa') {
-        cargarPoolCandidatos();
+        const { page, ...otherFilters } = filtros;
+        const filtersChanged = JSON.stringify(otherFilters) !== JSON.stringify({
+          estado_interno: '',
+          origen: '',
+          puntuacion_min: '',
+          puntuacion_max: '',
+          search: '',
+          per_page: 15
+        });
+        
+        // Si los filtros cambiaron, resetear a página 1
+        cargarPoolCandidatos(filtersChanged);
       }
     }, 300);
 
     return () => clearTimeout(timeoutId);
-  }, [filtros]);
+  }, [filtros.estado_interno, filtros.origen, filtros.puntuacion_min, filtros.puntuacion_max, filtros.search]);
 
-  const cargarPoolCandidatos = async () => {
+  // Cargar cuando cambie la página (sin delay)
+  useEffect(() => {
+    if (user && user.rol === 'empresa' && filtros.page > 1) {
+      cargarPoolCandidatos(false);
+    }
+  }, [filtros.page]);
+
+  const cargarPoolCandidatos = async (resetPage = false) => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
       
-      Object.entries(filtros).forEach(([key, value]) => {
+      // Si se resetea la página (nuevo filtro), ir a página 1
+      const currentFilters = resetPage ? { ...filtros, page: 1 } : filtros;
+      if (resetPage) {
+        setFiltros(currentFilters);
+      }
+      
+      Object.entries(currentFilters).forEach(([key, value]) => {
         if (value) params.append(key, value);
       });
 
       const response = await api.get(`/pool-candidatos?${params}`);
       if (response.data.success) {
-        setCandidatos(response.data.data.data || []);
+        const data = response.data.data;
+        setCandidatos(data.data || []);
+        setPaginacion({
+          current_page: data.current_page,
+          per_page: data.per_page,
+          total: data.total,
+          last_page: data.last_page,
+          from: data.from || 0,
+          to: data.to || 0
+        });
       }
     } catch (error) {
       console.error('Error al cargar pool de candidatos:', error);
@@ -94,6 +159,18 @@ export default function PoolCandidatos() {
       }
     } catch (error) {
       console.error('Error al cargar estadísticas:', error);
+    }
+  };
+
+  // Cargar tags únicos disponibles
+  const cargarTagsDisponibles = async () => {
+    try {
+      const response = await api.get('/pool-candidatos/tags');
+      if (response.data.success) {
+        setTagsDisponibles(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error al cargar tags:', error);
     }
   };
 
@@ -118,7 +195,7 @@ export default function PoolCandidatos() {
         toast.success('Candidato creado y agregado al pool exitosamente');
         setMostrarModalCrear(false);
         limpiarFormulario();
-        cargarPoolCandidatos();
+        cargarPoolCandidatos(false);
         cargarEstadisticas();
       }
     } catch (error) {
@@ -148,7 +225,7 @@ export default function PoolCandidatos() {
       if (response.data.success) {
         toast.success('Candidato agregado al pool exitosamente');
         setMostrarModalAgregar(false);
-        cargarPoolCandidatos();
+        cargarPoolCandidatos(false);
         cargarEstadisticas();
       }
     } catch (error) {
@@ -170,7 +247,7 @@ export default function PoolCandidatos() {
       
       if (response.data.success) {
         toast.success('Estado actualizado exitosamente');
-        cargarPoolCandidatos();
+        cargarPoolCandidatos(false);
         cargarEstadisticas();
       }
     } catch (error) {
@@ -199,7 +276,7 @@ export default function PoolCandidatos() {
           
           if (response.data.success) {
             toast.success('Candidato calificado exitosamente');
-            cargarPoolCandidatos();
+            cargarPoolCandidatos(false);
             cargarEstadisticas();
           }
         } catch (error) {
@@ -223,7 +300,7 @@ export default function PoolCandidatos() {
         
         if (response.data.success) {
           toast.success('Candidato eliminado del pool');
-          cargarPoolCandidatos();
+          cargarPoolCandidatos(false);
           cargarEstadisticas();
         }
       } catch (error) {
@@ -286,8 +363,55 @@ export default function PoolCandidatos() {
       origen: '',
       puntuacion_min: '',
       puntuacion_max: '',
-      search: ''
+      search: '',
+      page: 1,
+      per_page: 15
     });
+  };
+
+  // Función para cambiar de página
+  const cambiarPagina = (nuevaPagina) => {
+    setFiltros({
+      ...filtros,
+      page: nuevaPagina
+    });
+  };
+
+  // Función para cambiar items per página
+  const cambiarItemsPorPagina = (nuevoPerPage) => {
+    setFiltros({
+      ...filtros,
+      per_page: nuevoPerPage,
+      page: 1
+    });
+  };
+
+  // Funciones para manejar los modals nuevos
+  const abrirDetalleCandidato = (candidato) => {
+    setCandidatoSeleccionado(candidato);
+    setMostrarDetalle(true);
+  };
+
+  const abrirEdicionRapida = (candidato) => {
+    setCandidatoSeleccionado(candidato);
+    setMostrarEdicionRapida(true);
+  };
+
+  const abrirVincularBusquedas = (candidato) => {
+    setCandidatoSeleccionado(candidato);
+    setMostrarVincularBusquedas(true);
+  };
+
+  const cerrarModals = () => {
+    setCandidatoSeleccionado(null);
+    setMostrarDetalle(false);
+    setMostrarEdicionRapida(false);
+    setMostrarVincularBusquedas(false);
+  };
+
+  const handleUpdateCandidato = () => {
+    cargarPoolCandidatos(false);
+    cargarEstadisticas();
   };
 
   const getBadgeColor = (estado) => {
@@ -509,176 +633,118 @@ export default function PoolCandidatos() {
               <p className="text-muted">Agrega candidatos para comenzar a gestionar tu pool de talento</p>
             </div>
           ) : (
-            <div className="table-responsive">
-              <table className="table table-hover">
-                <thead>
-                  <tr>
-                    <th>Candidato</th>
-                    <th>Estado</th>
-                    <th>Origen</th>
-                    <th>Puntuación</th>
-                    <th>Tags</th>
-                    <th>Incorporación</th>
-                    <th>Último Contacto</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {candidatos.map(candidatoPool => (
-                    <tr key={candidatoPool.id}>
-                      <td>
-                        <div>
-                          <strong>
-                            {candidatoPool.candidato?.user?.name || 
-                             `${candidatoPool.candidato?.nombre || ''} ${candidatoPool.candidato?.apellido || ''}`.trim() || 
-                             'Sin nombre'}
-                          </strong>
-                          <div className="small text-muted">
-                            {candidatoPool.candidato?.user?.email || candidatoPool.candidato?.email || 'Sin email'}
-                          </div>
-                          {candidatoPool.candidato?.telefono && (
-                            <div className="small text-muted">
-                              <i className="bi bi-telephone me-1"></i>
-                              {candidatoPool.candidato.telefono}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td>
-                        <span className={`badge ${getBadgeColor(candidatoPool.estado_interno)}`}>
-                          {candidatoPool.estado_interno}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`badge ${getOrigenColor(candidatoPool.origen)}`}>
-                          {candidatoPool.origen}
-                        </span>
-                      </td>
-                      <td>
-                        {candidatoPool.puntuacion_empresa ? (
-                          <span className="badge bg-primary">
-                            {candidatoPool.puntuacion_empresa}/10
-                          </span>
-                        ) : (
-                          <span className="text-muted">Sin calificar</span>
-                        )}
-                      </td>
-                      <td>
-                        <div className="d-flex flex-wrap gap-1">
-                          {candidatoPool.tags && candidatoPool.tags.length > 0 ? (
-                            candidatoPool.tags.map((tag, index) => (
-                              <span key={index} className="badge bg-light text-dark">
-                                {tag}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-muted small">Sin tags</span>
-                          )}
-                        </div>
-                      </td>
-                      <td>
-                        <small>
-                          {candidatoPool.fecha_incorporacion 
-                            ? new Date(candidatoPool.fecha_incorporacion).toLocaleDateString() 
-                            : 'N/A'}
-                        </small>
-                      </td>
-                      <td>
-                        <small>
-                          {candidatoPool.ultimo_contacto 
-                            ? new Date(candidatoPool.ultimo_contacto).toLocaleDateString() 
-                            : 'Nunca'}
-                        </small>
-                      </td>
-                      <td>
-                        <div className="btn-group btn-group-sm">
-                          {/* Cambios de estado */}
-                          {candidatoPool.estado_interno === 'activo' && (
-                            <button 
-                              className="btn btn-outline-info"
-                              title="Marcar en proceso"
-                              onClick={() => cambiarEstado(candidatoPool.candidato_id, 'en_proceso')}
-                              disabled={actionLoading}
-                            >
-                              <i className="bi bi-hourglass-split"></i>
-                            </button>
-                          )}
-                          
-                          {['activo', 'en_proceso'].includes(candidatoPool.estado_interno) && (
-                            <>
-                              <button 
-                                className="btn btn-outline-success"
-                                title="Marcar como contratado"
-                                onClick={() => cambiarEstado(candidatoPool.candidato_id, 'contratado')}
-                                disabled={actionLoading}
-                              >
-                                <i className="bi bi-check-circle"></i>
-                              </button>
-                              <button 
-                                className="btn btn-outline-danger"
-                                title="Descartar candidato"
-                                onClick={() => cambiarEstado(candidatoPool.candidato_id, 'descartado')}
-                                disabled={actionLoading}
-                              >
-                                <i className="bi bi-x-circle"></i>
-                              </button>
-                            </>
-                          )}
-                          
-                          {candidatoPool.estado_interno === 'pausado' && (
-                            <button 
-                              className="btn btn-outline-success"
-                              title="Reactivar candidato"
-                              onClick={() => cambiarEstado(candidatoPool.candidato_id, 'activo')}
-                              disabled={actionLoading}
-                            >
-                              <i className="bi bi-play-circle"></i>
-                            </button>
-                          )}
-                          
-                          {['activo', 'en_proceso'].includes(candidatoPool.estado_interno) && (
-                            <button 
-                              className="btn btn-outline-warning"
-                              title="Pausar candidato"
-                              onClick={() => cambiarEstado(candidatoPool.candidato_id, 'pausado')}
-                              disabled={actionLoading}
-                            >
-                              <i className="bi bi-pause-circle"></i>
-                            </button>
-                          )}
-                          
-                          {/* Calificación */}
-                          <button 
-                            className="btn btn-outline-primary"
-                            title="Calificar candidato"
-                            onClick={() => calificarCandidato(candidatoPool.candidato_id)}
-                            disabled={actionLoading}
-                          >
-                            <i className="bi bi-star"></i>
-                          </button>
-                          
-                          {/* Eliminar */}
-                          <button 
-                            className="btn btn-outline-danger"
-                            title="Eliminar del pool"
-                            onClick={() => eliminarDelPool(
-                              candidatoPool.candidato_id,
-                              candidatoPool.candidato?.user?.name || 
-                              `${candidatoPool.candidato?.nombre || ''} ${candidatoPool.candidato?.apellido || ''}`.trim() || 
-                              'este candidato'
-                            )}
-                            disabled={actionLoading}
-                          >
-                            <i className="bi bi-trash"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="row g-3">
+              {candidatos.map((candidatoPool, index) => (
+                <div key={candidatoPool.id} className="col-12">
+                  <TarjetaCandidatoResponsiva
+                    candidato={candidatoPool}
+                    onVerDetalle={abrirDetalleCandidato}
+                    onEdicionRapida={abrirEdicionRapida}
+                    onEliminar={(candidato) => eliminarDelPool(
+                      candidato.candidato_id,
+                      candidato.candidato?.user?.name || 
+                      `${candidato.candidato?.nombre || ''} ${candidato.candidato?.apellido || ''}`.trim() || 
+                      'este candidato'
+                    )}
+                    actionLoading={actionLoading}
+                    index={index}
+                  />
+                </div>
+              ))}
             </div>
           )}
+            
+            {/* Paginación */}
+            {candidatos.length > 0 && paginacion.last_page > 1 && (
+              <div className="row mt-3 align-items-center">
+                <div className="col-md-6">
+                  <div className="d-flex align-items-center">
+                    <span className="text-muted me-2">Mostrar:</span>
+                    <select 
+                      className="form-select form-select-sm" 
+                      style={{width: 'auto'}}
+                      value={filtros.per_page}
+                      onChange={(e) => cambiarItemsPorPagina(parseInt(e.target.value))}
+                    >
+                      <option value={10}>10</option>
+                      <option value={15}>15</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                    </select>
+                    <span className="text-muted ms-2">
+                      de {paginacion.total} candidatos
+                    </span>
+                  </div>
+                </div>
+                <div className="col-md-6">
+                  <nav aria-label="Paginación de candidatos">
+                    <ul className="pagination pagination-sm justify-content-end mb-0">
+                      <li className={`page-item ${paginacion.current_page === 1 ? 'disabled' : ''}`}>
+                        <button 
+                          className="page-link" 
+                          onClick={() => cambiarPagina(paginacion.current_page - 1)}
+                          disabled={paginacion.current_page === 1}
+                        >
+                          <i className="bi bi-chevron-left"></i>
+                        </button>
+                      </li>
+                      
+                      {/* Páginas numéricas */}
+                      {(() => {
+                        const pages = [];
+                        const current = paginacion.current_page;
+                        const last = paginacion.last_page;
+                        
+                        // Mostrar primera página si no está cerca
+                        if (current > 3) {
+                          pages.push(
+                            <li key={1} className="page-item">
+                              <button className="page-link" onClick={() => cambiarPagina(1)}>1</button>
+                            </li>
+                          );
+                          if (current > 4) {
+                            pages.push(<li key="dots1" className="page-item disabled"><span className="page-link">...</span></li>);
+                          }
+                        }
+                        
+                        // Páginas alrededor de la actual
+                        for (let i = Math.max(1, current - 2); i <= Math.min(last, current + 2); i++) {
+                          pages.push(
+                            <li key={i} className={`page-item ${i === current ? 'active' : ''}`}>
+                              <button className="page-link" onClick={() => cambiarPagina(i)}>{i}</button>
+                            </li>
+                          );
+                        }
+                        
+                        // Mostrar última página si no está cerca
+                        if (current < last - 2) {
+                          if (current < last - 3) {
+                            pages.push(<li key="dots2" className="page-item disabled"><span className="page-link">...</span></li>);
+                          }
+                          pages.push(
+                            <li key={last} className="page-item">
+                              <button className="page-link" onClick={() => cambiarPagina(last)}>{last}</button>
+                            </li>
+                          );
+                        }
+                        
+                        return pages;
+                      })()}
+                      
+                      <li className={`page-item ${paginacion.current_page === paginacion.last_page ? 'disabled' : ''}`}>
+                        <button 
+                          className="page-link" 
+                          onClick={() => cambiarPagina(paginacion.current_page + 1)}
+                          disabled={paginacion.current_page === paginacion.last_page}
+                        >
+                          <i className="bi bi-chevron-right"></i>
+                        </button>
+                      </li>
+                    </ul>
+                  </nav>
+                </div>
+              </div>
+            )}
         </div>
       </div>
 
@@ -1034,6 +1100,37 @@ export default function PoolCandidatos() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal Detalle Candidato */}
+      {mostrarDetalle && candidatoSeleccionado && (
+        <DetalleCandidato
+          candidatoId={candidatoSeleccionado.candidato_id}
+          empresaCandidatoId={candidatoSeleccionado.id}
+          show={mostrarDetalle}
+          onHide={cerrarModals}
+          onUpdate={handleUpdateCandidato}
+        />
+      )}
+
+      {/* Modal Edición Rápida */}
+      {mostrarEdicionRapida && candidatoSeleccionado && (
+        <EdicionRapidaCandidato
+          candidato={candidatoSeleccionado}
+          show={mostrarEdicionRapida}
+          onHide={cerrarModals}
+          onUpdate={handleUpdateCandidato}
+        />
+      )}
+
+      {/* Modal Vincular Búsquedas */}
+      {mostrarVincularBusquedas && candidatoSeleccionado && (
+        <VincularBusquedas
+          candidato={candidatoSeleccionado}
+          show={mostrarVincularBusquedas}
+          onHide={cerrarModals}
+          onUpdate={handleUpdateCandidato}
+        />
       )}
     </div>
   );

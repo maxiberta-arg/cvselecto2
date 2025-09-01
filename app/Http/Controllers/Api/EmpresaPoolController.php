@@ -514,4 +514,149 @@ class EmpresaPoolController extends Controller
         
         return $empresa;
     }
+
+    /**
+     * Obtener detalle específico de un candidato en el pool
+     */
+    public function show($empresaCandidatoId)
+    {
+        try {
+            $empresa = $this->obtenerEmpresaAutenticada();
+            
+            $empresaCandidato = $empresa->empresaCandidatos()
+                                       ->with([
+                                           'candidato.user',
+                                           'candidato.educaciones',
+                                           'candidato.experiencias'
+                                       ])
+                                       ->findOrFail($empresaCandidatoId);
+
+            return response()->json([
+                'success' => true,
+                'data' => $empresaCandidato
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error en EmpresaPoolController@show: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener detalle del candidato',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Actualizar información específica del candidato en el pool
+     */
+    public function updatePoolInfo($candidatoId, Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'notas_privadas' => 'sometimes|string|max:1000',
+            'puntuacion_empresa' => 'sometimes|nullable|numeric|min:0|max:10',
+            'tags' => 'sometimes|array',
+            'estado_interno' => 'sometimes|in:activo,en_proceso,contratado,descartado,pausado'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Datos inválidos',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $empresa = $this->obtenerEmpresaAutenticada();
+            
+            $empresaCandidato = $empresa->empresaCandidatos()
+                                       ->where('candidato_id', $candidatoId)
+                                       ->firstOrFail();
+
+            $datosActualizacion = [];
+            
+            if ($request->has('notas_privadas')) {
+                $datosActualizacion['notas_privadas'] = $request->notas_privadas;
+            }
+            
+            if ($request->has('puntuacion_empresa')) {
+                $datosActualizacion['puntuacion_empresa'] = $request->puntuacion_empresa;
+            }
+            
+            if ($request->has('tags')) {
+                $datosActualizacion['tags'] = $request->tags;
+            }
+
+            // Si hay cambio de estado, actualizar historial
+            if ($request->has('estado_interno') && $request->estado_interno !== $empresaCandidato->estado_interno) {
+                $historialActual = $empresaCandidato->historial_estados ?? [];
+                
+                $historialActual[] = [
+                    'estado_anterior' => $empresaCandidato->estado_interno,
+                    'estado_nuevo' => $request->estado_interno,
+                    'fecha' => now()->toISOString(),
+                    'observaciones' => 'Cambio de estado desde vista detalle'
+                ];
+                
+                $datosActualizacion['estado_interno'] = $request->estado_interno;
+                $datosActualizacion['historial_estados'] = $historialActual;
+                
+                if ($request->estado_interno === 'contratado') {
+                    $datosActualizacion['fecha_contratacion'] = now();
+                }
+            }
+
+            $empresaCandidato->update($datosActualizacion);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Información actualizada correctamente',
+                'data' => $empresaCandidato->fresh()->load('candidato.user')
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error en EmpresaPoolController@updatePoolInfo: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al actualizar información',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener todos los tags únicos utilizados por la empresa
+     */
+    public function getTags()
+    {
+        try {
+            $empresa = $this->obtenerEmpresaAutenticada();
+            
+            $tags = $empresa->empresaCandidatos()
+                           ->whereNotNull('tags')
+                           ->where('tags', '!=', '[]')
+                           ->pluck('tags')
+                           ->flatten()
+                           ->unique()
+                           ->values()
+                           ->sort();
+            
+            return response()->json([
+                'success' => true,
+                'data' => $tags
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error en EmpresaPoolController@getTags: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener tags',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }
