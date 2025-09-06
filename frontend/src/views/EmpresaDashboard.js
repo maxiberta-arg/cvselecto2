@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { AuthContext, useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import DashboardCard from '../components/DashboardCard';
-import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
 // Dashboard visual y profesional para empresas con funcionalidad completa
@@ -24,47 +23,30 @@ export default function EmpresaDashboard() {
     const cargarEstadisticas = async () => {
       try {
         setLoading(true);
-        console.log('Cargando estadísticas para usuario:', user.id);
         
         // Cargar datos de la empresa
         const empresaResponse = await api.get(`/empresas/by-user/${user.id}`);
         const empresa = empresaResponse.data;
-        console.log('Datos de empresa cargados:', empresa);
 
         // Cargar búsquedas de la empresa
         const busquedasResponse = await api.get('/busquedas-laborales');
         const todasLasBusquedas = busquedasResponse.data;
-        console.log('Todas las búsquedas cargadas:', todasLasBusquedas);
-        console.log('ID de empresa actual:', empresa.id);
         const busquedasEmpresa = todasLasBusquedas.filter(b => {
-          console.log(`Búsqueda ${b.id}: empresa_id=${b.empresa_id}, coincide=${b.empresa_id === empresa.id}`);
           return b.empresa_id === empresa.id;
         });
-        console.log('Búsquedas filtradas de la empresa:', busquedasEmpresa);
 
         // Cargar postulaciones relacionadas
         const postulacionesResponse = await api.get(`/postulaciones`);
         const todasLasPostulaciones = postulacionesResponse.data;
-        console.log('Total de postulaciones en sistema:', todasLasPostulaciones.length);
         
         const postulacionesEmpresa = todasLasPostulaciones.filter(
           p => busquedasEmpresa.find(b => b.id === p.busqueda_id)
         );
-        console.log('Postulaciones para la empresa:', postulacionesEmpresa);
 
         // Calcular estadísticas reales
         const busquedasActivas = busquedasEmpresa.filter(b => b.estado === 'abierta').length;
         const candidatosUnicos = new Set(postulacionesEmpresa.map(p => p.candidato_id)).size;
         const postulacionesPendientes = postulacionesEmpresa.filter(p => p.estado === 'postulado').length;
-        
-        console.log('Estadísticas calculadas:', {
-          busquedasActivas,
-          candidatosUnicos,
-          postulacionesPendientes,
-          totalBusquedas: busquedasEmpresa.length,
-          totalPostulaciones: postulacionesEmpresa.length,
-          estadosEncontrados: busquedasEmpresa.map(b => b.estado)
-        });
         
         setStats({
           busquedasActivas,
@@ -93,6 +75,9 @@ export default function EmpresaDashboard() {
   const navegarAPerfil = () => navigate('/configuracion-empresa');
   const navegarABusquedas = () => navigate('/mis-busquedas-laborales');
   const navegarACandidatos = () => navigate('/gestion-candidatos');
+  const navegarACentroCandidatos = () => {
+    navigate('/empresa/centro-candidatos');
+  };
   const crearBusqueda = () => navigate('/crear-busqueda-laboral');
 
   return (
@@ -253,7 +238,7 @@ export default function EmpresaDashboard() {
                   Acciones Rápidas
                 </h5>
                 <div className="row">
-                  <div className="col-md-6 mb-2">
+                  <div className="col-md-4 mb-2">
                     <button 
                       className="btn btn-primary btn-lg w-100"
                       onClick={crearBusqueda}
@@ -262,7 +247,22 @@ export default function EmpresaDashboard() {
                       Crear Nueva Búsqueda
                     </button>
                   </div>
-                  <div className="col-md-6 mb-2">
+                  <div className="col-md-4 mb-2">
+                    <button 
+                      className="btn btn-gradient btn-lg w-100 text-white"
+                      onClick={navegarACentroCandidatos}
+                      title="Centro unificado para gestionar candidatos, pool privado y búsquedas"
+                      style={{ 
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        border: 'none',
+                        boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'
+                      }}
+                    >
+                      <i className="bi bi-grid-3x3-gap me-2"></i>
+                      Centro Candidatos
+                    </button>
+                  </div>
+                  <div className="col-md-4 mb-2">
                     <button 
                       className="btn btn-success btn-lg w-100"
                       onClick={() => navigate('/gestion-candidatos')}

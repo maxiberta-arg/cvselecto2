@@ -17,6 +17,7 @@ import EditarCandidato from '../components/EditarCandidato';
 import GestionCandidatos from '../views/GestionCandidatos';
 import PoolCandidatos from '../views/PoolCandidatos';
 import BusquedaCandidatos from '../views/BusquedaCandidatos';
+import CentroCandidatos from '../views/CentroCandidatos';
 import ReportesEmpresa from '../views/ReportesEmpresa';
 import ConfiguracionEmpresa from '../views/ConfiguracionEmpresa';
 import Login from '../views/Login';
@@ -106,6 +107,11 @@ function AppContent() {
           <Route path="/gestion-candidatos" element={
             <ProtectedRoute rol="empresa">
               <GestionCandidatos />
+            </ProtectedRoute>
+          } />
+          <Route path="/empresa/centro-candidatos" element={
+            <ProtectedRoute rol="empresa">
+              <CentroCandidatos />
             </ProtectedRoute>
           } />
           <Route path="/empresa/candidatos/editar/:id" element={
