@@ -622,6 +622,178 @@ class EmpresaPoolController extends Controller
                 'success' => true,
                 'data' => $tags
             ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error en EmpresaPoolController@getTags: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener tags',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener candidatos listos para evaluación
+     */
+    public function candidatosParaEvaluacion()
+    {
+        try {
+            $empresa = $this->obtenerEmpresaAutenticada();
+            
+            $candidatos = $empresa->empresaCandidatos()
+                ->with(['candidato.user', 'evaluaciones'])
+                ->whereIn('estado_interno', ['activo', 'en_proceso'])
+                ->get()
+                ->map(function ($empresaCandidato) {
+                    return [
+                        'id' => $empresaCandidato->id,
+                        'candidato' => $empresaCandidato->candidato,
+                        'estado_interno' => $empresaCandidato->estado_interno,
+                        'puntuacion_empresa' => $empresaCandidato->puntuacion_empresa,
+                        'resumen_evaluaciones' => $empresaCandidato->resumen_evaluaciones,
+                        'tiene_evaluaciones_pendientes' => $empresaCandidato->tieneEvaluacionesPendientes(),
+                        'puntuacion_promedio' => $empresaCandidato->puntuacion_promedio_evaluaciones
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $candidatos,
+                'meta' => [
+                    'total' => $candidatos->count(),
+                    'sin_evaluar' => $candidatos->where('resumen_evaluaciones.total', 0)->count(),
+                    'evaluacion_pendiente' => $candidatos->where('tiene_evaluaciones_pendientes', true)->count()
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error en EmpresaPoolController@candidatosParaEvaluacion: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener candidatos para evaluación',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener ranking de candidatos basado en evaluaciones
+     */
+    public function rankingCandidatos(Request $request)
+    {
+        try {
+            $empresa = $this->obtenerEmpresaAutenticada();
+            
+            $tipoEvaluacion = $request->get('tipo_evaluacion');
+            $limite = min($request->get('limite', 10), 50);
+
+            $query = $empresa->empresaCandidatos()
+                ->with(['candidato.user', 'evaluacionesCompletadas'])
+                ->whereHas('evaluacionesCompletadas');
+
+            if ($tipoEvaluacion) {
+                $query->whereHas('evaluacionesCompletadas', function ($q) use ($tipoEvaluacion) {
+                    $q->where('tipo_evaluacion', $tipoEvaluacion);
+                });
+            }
+
+            $candidatos = $query->get()
+                ->map(function ($empresaCandidato) use ($tipoEvaluacion) {
+                    $evaluaciones = $empresaCandidato->evaluacionesCompletadas;
+                    
+                    if ($tipoEvaluacion) {
+                        $evaluaciones = $evaluaciones->where('tipo_evaluacion', $tipoEvaluacion);
+                    }
+                    
+                    return [
+                        'id' => $empresaCandidato->id,
+                        'candidato' => $empresaCandidato->candidato,
+                        'puntuacion_promedio' => $evaluaciones->avg('puntuacion_total'),
+                        'total_evaluaciones' => $evaluaciones->count(),
+                        'ultima_evaluacion' => $evaluaciones->max('fecha_completada'),
+                        'estado_interno' => $empresaCandidato->estado_interno
+                    ];
+                })
+                ->sortByDesc('puntuacion_promedio')
+                ->take($limite)
+                ->values();
+
+            return response()->json([
+                'success' => true,
+                'data' => $candidatos,
+                'meta' => [
+                    'tipo_evaluacion' => $tipoEvaluacion,
+                    'limite' => $limite,
+                    'total_candidatos_evaluados' => $candidatos->count()
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error en EmpresaPoolController@rankingCandidatos: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener ranking de candidatos',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Obtener estadísticas extendidas incluyendo evaluaciones
+     */
+    public function estadisticasExtendidas()
+    {
+        try {
+            $empresa = $this->obtenerEmpresaAutenticada();
+            
+            $estadisticasBasicas = $empresa->estadisticasPool();
+            
+            // Estadísticas de evaluaciones
+            $totalCandidatos = $empresa->empresaCandidatos()->count();
+            $candidatosEvaluados = $empresa->empresaCandidatos()
+                ->whereHas('evaluacionesCompletadas')
+                ->count();
+            
+            $evaluacionesCompletadas = \App\Models\Evaluacion::whereHas('empresaCandidato', function ($q) use ($empresa) {
+                $q->where('empresa_id', $empresa->id);
+            })->where('estado_evaluacion', 'completada');
+
+            $estadisticasEvaluacion = [
+                'candidatos_evaluados' => $candidatosEvaluados,
+                'porcentaje_evaluados' => $totalCandidatos > 0 ? round(($candidatosEvaluados / $totalCandidatos) * 100, 1) : 0,
+                'evaluaciones_completadas' => $evaluacionesCompletadas->count(),
+                'puntuacion_promedio_general' => $evaluacionesCompletadas->avg('puntuacion_total'),
+                'por_tipo_evaluacion' => $evaluacionesCompletadas
+                    ->select('tipo_evaluacion', DB::raw('count(*) as total'), DB::raw('avg(puntuacion_total) as promedio'))
+                    ->groupBy('tipo_evaluacion')
+                    ->get()
+                    ->keyBy('tipo_evaluacion'),
+                'ultima_semana' => $evaluacionesCompletadas->where('fecha_completada', '>=', now()->subWeek())->count(),
+                'ultimo_mes' => $evaluacionesCompletadas->where('fecha_completada', '>=', now()->subMonth())->count()
+            ];
+
+            return response()->json([
+                'success' => true,
+                'data' => array_merge($estadisticasBasicas, [
+                    'evaluaciones' => $estadisticasEvaluacion
+                ])
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error en EmpresaPoolController@estadisticasExtendidas: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener estadísticas extendidas',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+            
+            return response()->json([
+                'success' => true,
+                'data' => $tags
+            ]);
         } catch (\Exception $e) {
             \Log::error('Error en EmpresaPoolController@getTags: ' . $e->getMessage());
             return response()->json([

@@ -148,6 +148,71 @@ class EmpresaCandidato extends Model
         $this->save();
     }
 
+    /**
+     * Relación con evaluaciones
+     */
+    public function evaluaciones()
+    {
+        return $this->hasMany(Evaluacion::class);
+    }
+
+    /**
+     * Obtener la evaluación más reciente
+     */
+    public function evaluacionReciente()
+    {
+        return $this->hasOne(Evaluacion::class)->latest();
+    }
+
+    /**
+     * Obtener evaluaciones completadas
+     */
+    public function evaluacionesCompletadas()
+    {
+        return $this->evaluaciones()->where('estado_evaluacion', 'completada');
+    }
+
+    /**
+     * Calcular puntuación promedio de evaluaciones
+     */
+    public function getPuntuacionPromedioEvaluacionesAttribute()
+    {
+        $evaluacionesCompletadas = $this->evaluacionesCompletadas;
+        
+        if ($evaluacionesCompletadas->count() === 0) {
+            return $this->puntuacion_empresa; // Fallback a puntuación manual
+        }
+
+        return $evaluacionesCompletadas->avg('puntuacion_total');
+    }
+
+    /**
+     * Verificar si tiene evaluaciones pendientes
+     */
+    public function tieneEvaluacionesPendientes()
+    {
+        return $this->evaluaciones()
+                    ->whereIn('estado_evaluacion', ['pendiente', 'en_progreso'])
+                    ->exists();
+    }
+
+    /**
+     * Obtener resumen de evaluaciones
+     */
+    public function getResumenEvaluacionesAttribute()
+    {
+        $evaluaciones = $this->evaluaciones;
+        
+        return [
+            'total' => $evaluaciones->count(),
+            'completadas' => $evaluaciones->where('estado_evaluacion', 'completada')->count(),
+            'pendientes' => $evaluaciones->where('estado_evaluacion', 'pendiente')->count(),
+            'en_progreso' => $evaluaciones->where('estado_evaluacion', 'en_progreso')->count(),
+            'puntuacion_promedio' => $this->puntuacion_promedio_evaluaciones,
+            'ultima_evaluacion' => $this->evaluacionReciente?->created_at
+        ];
+    }
+
     // Getter para estado formateado
     public function getEstadoFormateadoAttribute()
     {

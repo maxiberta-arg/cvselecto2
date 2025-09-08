@@ -28,6 +28,11 @@ enum EstadoCandidato: string
     case CONTRATADO = 'contratado';
     case DESCARTADO = 'descartado';
     case PAUSADO = 'pausado';
+    
+    // Estados específicos de Evaluación (Fase 2A - Punto 3)
+    case EN_EVALUACION = 'en_evaluacion';
+    case EVALUADO = 'evaluado';
+    case EVALUACION_PENDIENTE = 'evaluacion_pendiente';
 
     /**
      * Obtiene todos los estados válidos para postulaciones
@@ -55,6 +60,18 @@ enum EstadoCandidato: string
             self::CONTRATADO,
             self::DESCARTADO,
             self::PAUSADO,
+        ];
+    }
+
+    /**
+     * Obtiene todos los estados específicos de evaluación
+     */
+    public static function evaluacionStates(): array
+    {
+        return [
+            self::EN_EVALUACION,
+            self::EVALUADO,
+            self::EVALUACION_PENDIENTE,
         ];
     }
 
