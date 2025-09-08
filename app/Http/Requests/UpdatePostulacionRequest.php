@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rules\Enum;
+use App\Enums\EstadoCandidato;
 
 class UpdatePostulacionRequest extends FormRequest
 {
@@ -22,8 +24,29 @@ class UpdatePostulacionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'estado' => 'in:postulado,en proceso,rechazado,seleccionado',
+            'estado' => [
+                'sometimes',
+                'required',
+                'string',
+                function ($attribute, $value, $fail) {
+                    if (!in_array($value, EstadoCandidato::postulacionValues())) {
+                        $validStates = implode(', ', EstadoCandidato::postulacionValues());
+                        $fail("El estado '$value' no es válido. Estados permitidos para postulaciones: $validStates");
+                    }
+                }
+            ],
             'fecha_postulacion' => 'nullable|date',
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     */
+    public function messages(): array
+    {
+        return [
+            'estado.required' => 'El estado es requerido.',
+            'fecha_postulacion.date' => 'La fecha de postulación debe ser una fecha válida.',
         ];
     }
 }

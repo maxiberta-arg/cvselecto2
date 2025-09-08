@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StorePostulacionRequest;
 use App\Http\Requests\UpdatePostulacionRequest;
+use App\Enums\EstadoCandidato;
 
 class PostulacionController extends Controller
 {
@@ -198,7 +199,7 @@ class PostulacionController extends Controller
             ->selectRaw('
                 COUNT(*) as total,
                 COUNT(CASE WHEN estado = "postulado" THEN 1 END) as postulados,
-                COUNT(CASE WHEN estado = "en proceso" THEN 1 END) as en_proceso,
+                COUNT(CASE WHEN estado = "en_revision" THEN 1 END) as en_revision,
                 COUNT(CASE WHEN estado = "seleccionado" THEN 1 END) as seleccionados,
                 COUNT(CASE WHEN estado = "rechazado" THEN 1 END) as rechazados,
                 AVG(puntuacion) as promedio_puntuacion,

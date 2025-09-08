@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UpdatePoolCandidatoRequest;
 use App\Models\Candidato;
 use App\Models\Empresa;
 use App\Models\EmpresaCandidato;
@@ -276,23 +277,8 @@ class EmpresaPoolController extends Controller
     /**
      * Actualizar datos del candidato en el pool
      */
-    public function actualizar(Request $request, $candidatoId)
+    public function actualizar(UpdatePoolCandidatoRequest $request, $candidatoId)
     {
-        $validator = Validator::make($request->all(), [
-            'estado_interno' => 'sometimes|in:activo,en_proceso,contratado,descartado,pausado',
-            'tags' => 'sometimes|array',
-            'notas_privadas' => 'sometimes|string|max:1000',
-            'puntuacion_empresa' => 'sometimes|numeric|min:0|max:10',
-            'observaciones' => 'sometimes|string|max:500'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Datos inválidos',
-                'errors' => $validator->errors()
-            ], 422);
-        }
 
         try {
             $empresa = $this->obtenerEmpresaAutenticada();
@@ -549,22 +535,8 @@ class EmpresaPoolController extends Controller
     /**
      * Actualizar información específica del candidato en el pool
      */
-    public function updatePoolInfo($candidatoId, Request $request)
+    public function updatePoolInfo($candidatoId, UpdatePoolCandidatoRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'notas_privadas' => 'sometimes|string|max:1000',
-            'puntuacion_empresa' => 'sometimes|nullable|numeric|min:0|max:10',
-            'tags' => 'sometimes|array',
-            'estado_interno' => 'sometimes|in:activo,en_proceso,contratado,descartado,pausado'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Datos inválidos',
-                'errors' => $validator->errors()
-            ], 422);
-        }
 
         try {
             DB::beginTransaction();

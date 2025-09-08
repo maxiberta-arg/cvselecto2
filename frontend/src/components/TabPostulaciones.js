@@ -108,7 +108,7 @@ export default function TabPostulaciones({ empresaData, onMoverAPool, candidatos
           >
             <option value="todos">Todos los estados</option>
             <option value="postulado">Postulado</option>
-            <option value="en proceso">En Proceso</option>
+            <option value="en_revision">En Revisión</option>
             <option value="seleccionado">Seleccionado</option>
             <option value="rechazado">Rechazado</option>
           </select>
@@ -168,11 +168,11 @@ export default function TabPostulaciones({ empresaData, onMoverAPool, candidatos
                   <td>
                     <span className={`badge ${
                       postulacion.estado === 'postulado' ? 'bg-warning' :
-                      postulacion.estado === 'en proceso' ? 'bg-info' :
+                      postulacion.estado === 'en_revision' ? 'bg-info' :
                       postulacion.estado === 'seleccionado' ? 'bg-success' :
                       'bg-danger'
                     }`}>
-                      {postulacion.estado}
+                      {postulacion.estado === 'en_revision' ? 'En Revisión' : postulacion.estado}
                     </span>
                   </td>
                   <td>
@@ -191,14 +191,14 @@ export default function TabPostulaciones({ empresaData, onMoverAPool, candidatos
                       {postulacion.estado === 'postulado' && (
                         <button 
                           className="btn btn-outline-info"
-                          title="Marcar en proceso"
-                          onClick={() => cambiarEstadoPostulacion(postulacion.id, 'en proceso')}
+                          title="Marcar en revisión"
+                          onClick={() => cambiarEstadoPostulacion(postulacion.id, 'en_revision')}
                         >
                           <i className="bi bi-hourglass-split"></i>
                         </button>
                       )}
                       
-                      {(postulacion.estado === 'postulado' || postulacion.estado === 'en proceso') && (
+                      {(postulacion.estado === 'postulado' || postulacion.estado === 'en_revision') && (
                         <>
                           <button 
                             className="btn btn-outline-success"
