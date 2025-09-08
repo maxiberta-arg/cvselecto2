@@ -71,9 +71,10 @@ export default function TabPool({ empresaData, candidatos, onPoolUpdate, onRefre
         estado_interno: nuevoEstado
       });
       
-      setPoolCandidatos(prev => prev.map(p => 
-        p.candidato.id === candidatoId ? { ...p, estado_interno: nuevoEstado } : p
-      ));
+      // Actualizar el estado a través del callback padre
+      if (onPoolUpdate) {
+        onPoolUpdate();
+      }
       
       setSuccess(`Estado actualizado a "${nuevoEstado}"`);
       setTimeout(() => setSuccess(''), 3000);

@@ -211,16 +211,40 @@ enum EstadoCandidato: string
     public static function fromLegacy(string $legacyState): ?self
     {
         return match($legacyState) {
-            'en proceso' => self::EN_PROCESO, // Mapeo específico para inconsistencia
+            'en proceso' => self::EN_REVISION, // Mapeo específico para postulaciones
             'postulado' => self::POSTULADO,
             'seleccionado' => self::SELECCIONADO,
             'rechazado' => self::RECHAZADO,
             'activo' => self::ACTIVO,
-            'en_proceso' => self::EN_PROCESO,
+            'en_proceso' => self::EN_PROCESO, // Para pool
             'contratado' => self::CONTRATADO,
             'descartado' => self::DESCARTADO,
             'pausado' => self::PAUSADO,
             default => null,
         };
+    }
+
+    /**
+     * Mapea un estado legacy a nuevo estado (alias para fromLegacy)
+     */
+    public static function mapLegacyState(string $legacyState): string
+    {
+        $mapped = self::fromLegacy($legacyState);
+        return $mapped ? $mapped->value : $legacyState;
+    }
+
+    /**
+     * Verifica si una transición es válida (método estático)
+     */
+    public static function isValidTransition(string $from, string $to): bool
+    {
+        $fromState = self::tryFrom($from);
+        $toState = self::tryFrom($to);
+        
+        if (!$fromState || !$toState) {
+            return false;
+        }
+        
+        return $fromState->canTransitionTo($toState);
     }
 }
