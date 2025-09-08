@@ -2,51 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
-export default function TabPostulaciones({ empresaData, onMoverAPool, candidatos, onUpdate }) {
+export default function TabPostulaciones({ empresaData, onMoverAPool, postulaciones, onPostulacionesUpdate }) {
   const navigate = useNavigate();
-  const [postulaciones, setPostulaciones] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [filtroEstado, setFiltroEstado] = useState('todos');
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (empresaData) {
-      cargarPostulaciones();
-    }
-  }, [empresaData]);
-
-  const cargarPostulaciones = async () => {
-    try {
-      setLoading(true);
-      const response = await api.get('/postulaciones');
-      const todasPostulaciones = response.data;
-      
-      const postulacionesEmpresa = todasPostulaciones.filter(
-        p => p.busqueda_laboral?.empresa_id === empresaData.id
-      );
-      
-      setPostulaciones(postulacionesEmpresa);
-      onUpdate(postulacionesEmpresa);
-      
-    } catch (err) {
-      setError('Error al cargar postulaciones');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Usar postulaciones directamente de props
+  const postulacionesData = postulaciones || [];
 
   const cambiarEstadoPostulacion = async (postulacionId, nuevoEstado) => {
     try {
       await api.put(`/postulaciones/${postulacionId}`, { estado: nuevoEstado });
       
-      setPostulaciones(prev => prev.map(p => 
-        p.id === postulacionId ? { ...p, estado: nuevoEstado } : p
-      ));
-      
       setSuccess(`Estado cambiado a "${nuevoEstado}"`);
       setTimeout(() => setSuccess(''), 3000);
+      
+      // Actualizar datos en el componente padre
+      if (onPostulacionesUpdate) {
+        onPostulacionesUpdate();
+      }
       
     } catch (err) {
       setError('Error al cambiar estado');
@@ -65,8 +41,8 @@ export default function TabPostulaciones({ empresaData, onMoverAPool, candidatos
   };
 
   const filtrarPostulaciones = () => {
-    if (filtroEstado === 'todos') return postulaciones;
-    return postulaciones.filter(p => p.estado === filtroEstado);
+    if (filtroEstado === 'todos') return postulacionesData;
+    return postulacionesData.filter(p => p.estado === filtroEstado);
   };
 
   if (loading) {

@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
-export default function TabPool({ empresaData, candidatos, onUpdate, onRefreshStats }) {
+export default function TabPool({ empresaData, candidatos, onPoolUpdate, onRefreshStats }) {
   const navigate = useNavigate();
-  const [poolCandidatos, setPoolCandidatos] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [filtros, setFiltros] = useState({
     estado_interno: '',
     origen: '',
@@ -14,28 +13,34 @@ export default function TabPool({ empresaData, candidatos, onUpdate, onRefreshSt
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (empresaData) {
-      cargarPoolCandidatos();
-    }
-  }, [empresaData, filtros]);
+  // Usar candidatos directamente de props en lugar de cargar desde API
+  const poolCandidatos = candidatos || [];
 
-  const cargarPoolCandidatos = async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams(filtros).toString();
-      const response = await api.get(`/pool-candidatos?${params}`);
-      
-      setPoolCandidatos(response.data.data?.data || []);
-      onUpdate(response.data.data?.data || []);
-      
-    } catch (err) {
-      setError('Error al cargar pool de candidatos');
-      console.error(err);
-    } finally {
-      setLoading(false);
+  // Filtrar candidatos localmente
+  const candidatosFiltrados = poolCandidatos.filter(candidato => {
+    // Filtro por estado
+    if (filtros.estado_interno && candidato.estado_interno !== filtros.estado_interno) {
+      return false;
     }
-  };
+    
+    // Filtro por origen
+    if (filtros.origen && candidato.origen !== filtros.origen) {
+      return false;
+    }
+    
+    // Filtro por búsqueda
+    if (filtros.search) {
+      const searchTerm = filtros.search.toLowerCase();
+      const nombreCompleto = `${candidato.candidato?.nombre} ${candidato.candidato?.apellido}`.toLowerCase();
+      const email = candidato.candidato?.email?.toLowerCase() || '';
+      
+      if (!nombreCompleto.includes(searchTerm) && !email.includes(searchTerm)) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
 
   const eliminarDelPool = async (candidatoId) => {
     if (!confirm('¿Estás seguro de eliminar este candidato del pool?')) return;
@@ -43,10 +48,16 @@ export default function TabPool({ empresaData, candidatos, onUpdate, onRefreshSt
     try {
       await api.delete(`/pool-candidatos/candidato/${candidatoId}`);
       
-      setPoolCandidatos(prev => prev.filter(p => p.candidato.id !== candidatoId));
       setSuccess('Candidato eliminado del pool');
       setTimeout(() => setSuccess(''), 3000);
-      onRefreshStats();
+      
+      // Actualizar datos en el componente padre
+      if (onPoolUpdate) {
+        onPoolUpdate();
+      }
+      if (onRefreshStats) {
+        onRefreshStats();
+      }
       
     } catch (err) {
       setError('Error al eliminar candidato');
@@ -142,7 +153,7 @@ export default function TabPool({ empresaData, candidatos, onUpdate, onRefreshSt
         </div>
         <div className="col-md-2 text-end">
           <span className="badge bg-success fs-6">
-            {poolCandidatos.length} en pool
+            {candidatosFiltrados.length} en pool
           </span>
         </div>
       </div>
@@ -173,20 +184,27 @@ export default function TabPool({ empresaData, candidatos, onUpdate, onRefreshSt
       </div>
 
       {/* Lista de candidatos en pool */}
-      {poolCandidatos.length === 0 ? (
+      {candidatosFiltrados.length === 0 ? (
         <div className="text-center py-5">
           <i className="bi bi-collection fs-1 text-muted mb-3"></i>
-          <h6 className="text-muted">Tu pool privado está vacío</h6>
+          <h6 className="text-muted">
+            {poolCandidatos.length === 0 ? 'Tu pool privado está vacío' : 'No hay candidatos que coincidan con los filtros'}
+          </h6>
           <p className="text-muted">
-            Agrega candidatos manualmente o importa desde tus postulaciones para comenzar a construir tu pool de talento.
+            {poolCandidatos.length === 0 
+              ? 'Agrega candidatos manualmente o importa desde tus postulaciones para comenzar a construir tu pool de talento.'
+              : 'Intenta cambiar los filtros para ver más candidatos.'
+            }
           </p>
-          <button 
-            className="btn btn-primary"
-            onClick={() => navigate('/agregar-candidato-manual')}
-          >
-            <i className="bi bi-plus-circle me-2"></i>
-            Agregar Primer Candidato
-          </button>
+          {poolCandidatos.length === 0 && (
+            <button 
+              className="btn btn-primary"
+              onClick={() => navigate('/agregar-candidato-manual')}
+            >
+              <i className="bi bi-plus-circle me-2"></i>
+              Agregar Primer Candidato
+            </button>
+          )}
         </div>
       ) : (
         <div className="table-responsive">
@@ -203,7 +221,7 @@ export default function TabPool({ empresaData, candidatos, onUpdate, onRefreshSt
               </tr>
             </thead>
             <tbody>
-              {poolCandidatos.map(pool => (
+              {candidatosFiltrados.map(pool => (
                 <tr key={pool.id}>
                   <td>
                     <div>
