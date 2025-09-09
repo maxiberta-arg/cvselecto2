@@ -101,6 +101,35 @@ class PostulacionController extends Controller
     public function show(string $id)
     {
         $postulacion = \App\Models\Postulacion::with(['busquedaLaboral', 'candidato', 'entrevistas'])->findOrFail($id);
+        
+        // INTEGRACIÓN: Incluir información de evaluaciones
+        $evaluacionesInfo = null;
+        try {
+            $empresaCandidato = $postulacion->obtenerOCrearEmpresaCandidato();
+            $evaluaciones = $empresaCandidato->evaluaciones()
+                ->select(['id', 'nombre_evaluacion', 'tipo_evaluacion', 'estado_evaluacion', 'puntuacion_total', 'created_at'])
+                ->orderBy('created_at', 'desc')
+                ->get();
+                
+            $evaluacionesInfo = [
+                'total_evaluaciones' => $evaluaciones->count(),
+                'evaluaciones_pendientes' => $evaluaciones->where('estado_evaluacion', 'pendiente')->count(),
+                'evaluaciones_completadas' => $evaluaciones->where('estado_evaluacion', 'completada')->count(),
+                'puede_generar_evaluacion' => $postulacion->puedeGenerarEvaluacion(),
+                'ultima_evaluacion' => $evaluaciones->first(),
+                'evaluaciones' => $evaluaciones
+            ];
+        } catch (\Exception $e) {
+            // Si hay algún error, simplemente no incluir la información de evaluaciones
+            $evaluacionesInfo = [
+                'total_evaluaciones' => 0,
+                'puede_generar_evaluacion' => $postulacion->puedeGenerarEvaluacion(),
+                'evaluaciones' => []
+            ];
+        }
+        
+        $postulacion->evaluaciones_info = $evaluacionesInfo;
+        
         return response()->json($postulacion);
     }
 
@@ -221,11 +250,28 @@ class PostulacionController extends Controller
             'estado' => $request->estado
         ]);
 
-        return response()->json([
+        // INTEGRACIÓN: Generar evaluación automáticamente si procede
+        $evaluacion = null;
+        if ($postulacion->puedeGenerarEvaluacion()) {
+            $evaluacion = $postulacion->generarEvaluacionSiProcede();
+        }
+
+        $response = [
             'success' => true,
             'message' => 'Estado actualizado correctamente',
             'postulacion' => $postulacion
-        ]);
+        ];
+
+        // Incluir información de evaluación generada si existe
+        if ($evaluacion) {
+            $response['evaluacion_generada'] = [
+                'id' => $evaluacion->id,
+                'estado' => $evaluacion->estado_evaluacion,
+                'mensaje' => 'Se ha generado automáticamente una evaluación para este candidato'
+            ];
+        }
+
+        return response()->json($response);
     }
 
     /**
@@ -244,6 +290,74 @@ class PostulacionController extends Controller
             'success' => true,
             'message' => 'Candidato calificado correctamente',
             'postulacion' => $postulacion
+        ]);
+    }
+
+    /**
+     * INTEGRACIÓN: Obtener evaluaciones relacionadas con una postulación
+     */
+    public function evaluaciones(string $id)
+    {
+        $postulacion = \App\Models\Postulacion::with(['candidato', 'busquedaLaboral.empresa'])->findOrFail($id);
+        
+        // Obtener o crear la relación empresa-candidato
+        $empresaCandidato = $postulacion->obtenerOCrearEmpresaCandidato();
+        
+        // Obtener todas las evaluaciones
+        $evaluaciones = $empresaCandidato->evaluaciones()
+            ->with(['evaluador'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'postulacion_id' => $postulacion->id,
+            'empresa_candidato_id' => $empresaCandidato->id,
+            'evaluaciones' => $evaluaciones,
+            'puede_generar_evaluacion' => $postulacion->puedeGenerarEvaluacion()
+        ]);
+    }
+
+    /**
+     * INTEGRACIÓN: Crear evaluación manual para una postulación
+     */
+    public function crearEvaluacion(\Illuminate\Http\Request $request, string $id)
+    {
+        $request->validate([
+            'nombre_evaluacion' => 'required|string|max:255',
+            'tipo_evaluacion' => 'required|in:tecnica,competencias,cultural,entrevista,integral,personalizada',
+            'criterios_evaluacion' => 'required|array'
+        ]);
+
+        $postulacion = \App\Models\Postulacion::with(['candidato', 'busquedaLaboral.empresa'])->findOrFail($id);
+        
+        if (!$postulacion->puedeGenerarEvaluacion()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No se puede crear una evaluación para el estado actual de la postulación'
+            ], 400);
+        }
+
+        $empresaCandidato = $postulacion->obtenerOCrearEmpresaCandidato();
+        
+        $evaluacion = $empresaCandidato->evaluaciones()->create([
+            'evaluador_id' => auth()->id(),
+            'nombre_evaluacion' => $request->nombre_evaluacion,
+            'tipo_evaluacion' => $request->tipo_evaluacion,
+            'criterios_evaluacion' => $request->criterios_evaluacion,
+            'estado_evaluacion' => 'pendiente',
+            'metadatos' => [
+                'origen' => 'manual',
+                'postulacion_id' => $postulacion->id,
+                'busqueda_titulo' => $postulacion->busquedaLaboral->titulo,
+                'creado_por' => auth()->user()->name
+            ]
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Evaluación creada exitosamente',
+            'evaluacion' => $evaluacion->load('evaluador')
         ]);
     }
 }

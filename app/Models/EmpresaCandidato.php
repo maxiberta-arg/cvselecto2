@@ -224,4 +224,70 @@ class EmpresaCandidato extends Model
     {
         return self::ORIGENES[$this->origen] ?? $this->origen;
     }
+
+    /**
+     * INTEGRACIÓN: Sincronizar datos desde una postulación
+     */
+    public function sincronizarConPostulacion(\App\Models\Postulacion $postulacion)
+    {
+        // Mapear estado de postulación a estado interno
+        $estadoMapeado = $this->mapearEstadoPostulacion($postulacion->estado);
+        
+        // Actualizar datos si es necesario
+        $datosActualizados = [];
+        
+        if ($this->estado_interno !== $estadoMapeado) {
+            $datosActualizados['estado_interno'] = $estadoMapeado;
+        }
+        
+        if ($postulacion->notas_empresa && $this->notas_privadas !== $postulacion->notas_empresa) {
+            $datosActualizados['notas_privadas'] = $postulacion->notas_empresa;
+        }
+        
+        if ($postulacion->puntuacion && $this->puntuacion_empresa !== $postulacion->puntuacion) {
+            $datosActualizados['puntuacion_empresa'] = $postulacion->puntuacion;
+        }
+        
+        // Actualizar metadatos de sincronización
+        $metadatos = $this->metadatos ?? [];
+        $metadatos['ultima_sincronizacion_postulacion'] = [
+            'postulacion_id' => $postulacion->id,
+            'fecha' => now()->toISOString(),
+            'estado_origen' => $postulacion->estado
+        ];
+        $datosActualizados['metadatos'] = $metadatos;
+        
+        if (!empty($datosActualizados)) {
+            $this->update($datosActualizados);
+        }
+        
+        return $this;
+    }
+
+    /**
+     * INTEGRACIÓN: Mapear estado de postulación a estado interno
+     */
+    private function mapearEstadoPostulacion($estadoPostulacion)
+    {
+        $mapeo = [
+            'postulado' => 'activo',
+            'en_revision' => 'en_proceso', 
+            'seleccionado' => 'activo',
+            'rechazado' => 'descartado',
+            'contratado' => 'contratado',
+            'entrevista' => 'en_proceso'
+        ];
+
+        return $mapeo[$estadoPostulacion] ?? 'activo';
+    }
+
+    /**
+     * INTEGRACIÓN: Obtener postulaciones relacionadas con este candidato en esta empresa
+     */
+    public function postulacionesRelacionadas()
+    {
+        return \App\Models\Postulacion::whereHas('busquedaLaboral', function($query) {
+            $query->where('empresa_id', $this->empresa_id);
+        })->where('candidato_id', $this->candidato_id);
+    }
 }

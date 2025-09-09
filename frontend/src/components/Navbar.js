@@ -37,6 +37,7 @@ export default function Navbar() {
     { to: '/mis-busquedas-laborales', label: 'Búsquedas', icon: 'bi bi-clipboard-plus' },
     { to: '/gestion-candidatos', label: 'Postulaciones', icon: 'bi bi-list-check' },
     { to: '/pool-candidatos', label: 'Pool Candidatos', icon: 'bi bi-collection' },
+    { to: '/centro-evaluacion', label: 'Centro de Evaluación', icon: 'bi bi-clipboard-check' },
     { to: '/reportes-empresa', label: 'Reportes', icon: 'bi bi-bar-chart' }
   ];
   // Secciones con iconos y color activo para candidato

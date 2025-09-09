@@ -52,6 +52,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('postulaciones/{id}/calificar', [PostulacionController::class, 'calificar'])
              ->middleware('empresa.ownership:postulacion');
              
+        // INTEGRACIÓN: Postulaciones ↔ Evaluaciones
+        Route::get('postulaciones/{id}/evaluaciones', [PostulacionController::class, 'evaluaciones'])
+             ->middleware('empresa.ownership:postulacion');
+        Route::post('postulaciones/{id}/evaluaciones', [PostulacionController::class, 'crearEvaluacion'])
+             ->middleware('empresa.ownership:postulacion');
+             
         // Pool de candidatos empresarial
         Route::prefix('pool-candidatos')->name('pool.')->group(function () {
             Route::get('/', [App\Http\Controllers\Api\EmpresaPoolController::class, 'index'])->name('index');

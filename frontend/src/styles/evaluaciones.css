@@ -1,0 +1,455 @@
+/* Estilos específicos para el Centro de Evaluación */
+
+/* ===== CENTRO DE EVALUACIÓN ===== */
+.centro-evaluacion {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+/* Avatar personalizado */
+.avatar-sm {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-lg {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-title {
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.avatar-lg .avatar-title {
+  font-size: 1.25rem;
+}
+
+/* ===== TARJETAS DE EVALUACIÓN ===== */
+.evaluacion-card {
+  transition: all 0.3s ease;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.evaluacion-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-color: #007bff;
+}
+
+.evaluacion-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* ===== BADGES DE ESTADO ===== */
+.badge-estado-pendiente {
+  background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+  color: #212529;
+  font-weight: 600;
+}
+
+.badge-estado-progreso {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  color: white;
+  font-weight: 600;
+}
+
+.badge-estado-completada {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+  color: white;
+  font-weight: 600;
+}
+
+/* ===== BADGES DE TIPO ===== */
+.badge-tipo-tecnica {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+}
+
+.badge-tipo-comportamental {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  color: white;
+}
+
+.badge-tipo-cultural {
+  background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+  color: #212529;
+}
+
+.badge-tipo-entrevista {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+  color: white;
+}
+
+.badge-tipo-referencia {
+  background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+  color: white;
+}
+
+.badge-tipo-integral {
+  background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%);
+  color: white;
+}
+
+/* ===== BARRAS DE PROGRESO ===== */
+.progress-evaluacion {
+  height: 8px;
+  border-radius: 10px;
+  background-color: #e9ecef;
+  overflow: hidden;
+}
+
+.progress-evaluacion .progress-bar {
+  background: linear-gradient(90deg, #007bff 0%, #0056b3 100%);
+  border-radius: 10px;
+  transition: width 0.6s ease;
+}
+
+/* ===== TABLAS DE CRITERIOS ===== */
+.table-criterios {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.table-criterios th {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+  text-transform: uppercase;
+  font-size: 0.875rem;
+  letter-spacing: 0.5px;
+}
+
+.table-criterios td {
+  vertical-align: middle;
+  border-color: #f1f3f4;
+}
+
+.table-criterios .criterio-nombre {
+  font-weight: 600;
+  color: #495057;
+}
+
+.table-criterios .criterio-descripcion {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* ===== FORMULARIOS ===== */
+.form-evaluacion {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-evaluacion .form-label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.form-evaluacion .form-control:focus,
+.form-evaluacion .form-select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-evaluacion .was-validated .form-control:valid {
+  border-color: #28a745;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='m2.3 6.73.4-.4 1.6-1.6 2.1-2.1-.4-.4-1.7 1.7-1.6-1.6-.4.4 2 2z'/%3e%3c/svg%3e");
+}
+
+.form-evaluacion .was-validated .form-control:invalid {
+  border-color: #dc3545;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='m5.8 4.6 2.4 2.4M8.2 4.6l-2.4 2.4'/%3e%3c/svg%3e");
+}
+
+/* ===== CRITERIOS PERSONALIZADOS ===== */
+.criterio-personalizado {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+}
+
+.criterio-personalizado:hover {
+  border-color: #007bff;
+  background: #f0f8ff;
+}
+
+.criterio-personalizado .btn-eliminar {
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.criterio-personalizado:hover .btn-eliminar {
+  opacity: 1;
+}
+
+/* ===== PUNTUACIONES ===== */
+.puntuacion-input {
+  text-align: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.puntuacion-total {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* ===== ESTADÍSTICAS ===== */
+.estadistica-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border-left: 4px solid transparent;
+}
+
+.estadistica-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.estadistica-card.primaria {
+  border-left-color: #007bff;
+}
+
+.estadistica-card.exitosa {
+  border-left-color: #28a745;
+}
+
+.estadistica-card.informativa {
+  border-left-color: #17a2b8;
+}
+
+.estadistica-card.advertencia {
+  border-left-color: #ffc107;
+}
+
+.estadistica-numero {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+}
+
+.estadistica-label {
+  font-size: 0.875rem;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ===== NAVEGACIÓN DE PESTAÑAS ===== */
+.nav-tabs-evaluacion {
+  border-bottom: 2px solid #e9ecef;
+  margin-bottom: 2rem;
+}
+
+.nav-tabs-evaluacion .nav-link {
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #6c757d;
+  font-weight: 500;
+  padding: 1rem 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.nav-tabs-evaluacion .nav-link:hover {
+  border-color: #007bff;
+  color: #007bff;
+  background: none;
+}
+
+.nav-tabs-evaluacion .nav-link.active {
+  border-color: #007bff;
+  color: #007bff;
+  background: none;
+  font-weight: 600;
+}
+
+/* ===== SIDEBAR STICKY ===== */
+.sidebar-evaluacion {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
+}
+
+.sidebar-evaluacion .section-title {
+  color: #495057;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e9ecef;
+}
+
+/* ===== BOTONES ===== */
+.btn-evaluacion {
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.875rem;
+}
+
+.btn-evaluacion:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-crear-evaluacion {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+  border: none;
+  color: white;
+}
+
+.btn-completar-evaluacion {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  border: none;
+  color: white;
+}
+
+.btn-eliminar-evaluacion {
+  background: linear-gradient(135deg, #dc3545 0%, #bd2130 100%);
+  border: none;
+  color: white;
+}
+
+/* ===== ALERTAS PERSONALIZADAS ===== */
+.alerta-evaluacion {
+  border-radius: 8px;
+  border: none;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.alerta-evaluacion.exito {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  color: #155724;
+}
+
+.alerta-evaluacion.error {
+  background: linear-gradient(135deg, #f8d7da 0%, #f1b0b7 100%);
+  color: #721c24;
+}
+
+.alerta-evaluacion.advertencia {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  color: #856404;
+}
+
+/* ===== ANIMACIONES ===== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+/* ===== LOADING SPINNER ===== */
+.spinner-evaluacion {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .estadistica-numero {
+    font-size: 2rem;
+  }
+  
+  .avatar-lg {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .avatar-lg .avatar-title {
+    font-size: 1rem;
+  }
+  
+  .sidebar-evaluacion {
+    margin-top: 2rem;
+  }
+  
+  .nav-tabs-evaluacion .nav-link {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .estadistica-numero {
+    font-size: 1.5rem;
+  }
+  
+  .btn-evaluacion {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+  
+  .form-evaluacion {
+    padding: 1rem;
+  }
+}

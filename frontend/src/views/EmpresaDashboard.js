@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext, useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import postulacionEvaluacionService from '../services/postulacionEvaluacionService';
 
 // Dashboard visual y profesional para empresas con funcionalidad completa
 export default function EmpresaDashboard() {
@@ -10,7 +11,9 @@ export default function EmpresaDashboard() {
   const [stats, setStats] = useState({
     busquedasActivas: 0,
     candidatosTotal: 0,
-    postulacionesPendientes: 0
+    postulacionesPendientes: 0,
+    evaluacionesPendientes: 0,
+    evaluacionesCompletadas: 0
   });
   const [loading, setLoading] = useState(true);
 
@@ -48,10 +51,27 @@ export default function EmpresaDashboard() {
         const candidatosUnicos = new Set(postulacionesEmpresa.map(p => p.candidato_id)).size;
         const postulacionesPendientes = postulacionesEmpresa.filter(p => p.estado === 'postulado').length;
         
+        // INTEGRACIÓN: Obtener estadísticas de evaluaciones
+        let evaluacionesPendientes = 0;
+        let evaluacionesCompletadas = 0;
+        
+        try {
+          const estadisticasEvaluaciones = await postulacionEvaluacionService.obtenerEstadisticasEvaluaciones();
+          if (estadisticasEvaluaciones) {
+            evaluacionesPendientes = estadisticasEvaluaciones.pendientes || 0;
+            evaluacionesCompletadas = estadisticasEvaluaciones.completadas || 0;
+          }
+        } catch (evalError) {
+          console.warn('Error cargando estadísticas de evaluaciones:', evalError);
+          // Las estadísticas de evaluaciones quedan en 0 si fallan
+        }
+        
         setStats({
           busquedasActivas,
           candidatosTotal: candidatosUnicos,
-          postulacionesPendientes
+          postulacionesPendientes,
+          evaluacionesPendientes,
+          evaluacionesCompletadas
         });
       } catch (error) {
         console.error('Error cargando estadísticas:', error);
@@ -59,7 +79,9 @@ export default function EmpresaDashboard() {
         setStats({
           busquedasActivas: 0,
           candidatosTotal: 0,
-          postulacionesPendientes: 0
+          postulacionesPendientes: 0,
+          evaluacionesPendientes: 0,
+          evaluacionesCompletadas: 0
         });
       } finally {
         setLoading(false);
@@ -109,36 +131,59 @@ export default function EmpresaDashboard() {
 
         {/* Estadísticas rápidas */}
         <div className="row mb-4">
-          <div className="col-md-4">
+          <div className="col-md-2">
             <div className="card text-center shadow-sm border-0" style={{ backgroundColor: '#e8f5e8', borderRadius: '15px' }}>
               <div className="card-body">
-                <i className="bi bi-clipboard-check text-success mb-2" style={{ fontSize: '2rem' }}></i>
-                <h3 className="fw-bold text-success mb-0">
+                <i className="bi bi-clipboard-check text-success mb-2" style={{ fontSize: '1.5rem' }}></i>
+                <h4 className="fw-bold text-success mb-0">
                   {loading ? <div className="spinner-border spinner-border-sm" role="status"></div> : stats.busquedasActivas}
-                </h3>
+                </h4>
                 <small className="text-muted">Búsquedas Activas</small>
               </div>
             </div>
           </div>
-          <div className="col-md-4">
+          <div className="col-md-2">
             <div className="card text-center shadow-sm border-0" style={{ backgroundColor: '#e3f2fd', borderRadius: '15px' }}>
               <div className="card-body">
-                <i className="bi bi-people text-primary mb-2" style={{ fontSize: '2rem' }}></i>
-                <h3 className="fw-bold text-primary mb-0">
+                <i className="bi bi-people text-primary mb-2" style={{ fontSize: '1.5rem' }}></i>
+                <h4 className="fw-bold text-primary mb-0">
                   {loading ? <div className="spinner-border spinner-border-sm" role="status"></div> : stats.candidatosTotal}
-                </h3>
+                </h4>
                 <small className="text-muted">Candidatos Total</small>
               </div>
             </div>
           </div>
-          <div className="col-md-4">
+          <div className="col-md-2">
             <div className="card text-center shadow-sm border-0" style={{ backgroundColor: '#fff3e0', borderRadius: '15px' }}>
               <div className="card-body">
-                <i className="bi bi-clock text-warning mb-2" style={{ fontSize: '2rem' }}></i>
-                <h3 className="fw-bold text-warning mb-0">
+                <i className="bi bi-clock text-warning mb-2" style={{ fontSize: '1.5rem' }}></i>
+                <h4 className="fw-bold text-warning mb-0">
                   {loading ? <div className="spinner-border spinner-border-sm" role="status"></div> : stats.postulacionesPendientes}
-                </h3>
+                </h4>
                 <small className="text-muted">Postulaciones Pendientes</small>
+              </div>
+            </div>
+          </div>
+          {/* INTEGRACIÓN: Nuevas estadísticas de evaluaciones */}
+          <div className="col-md-3">
+            <div className="card text-center shadow-sm border-0" style={{ backgroundColor: '#fce4ec', borderRadius: '15px' }}>
+              <div className="card-body">
+                <i className="bi bi-clipboard2-pulse text-danger mb-2" style={{ fontSize: '1.5rem' }}></i>
+                <h4 className="fw-bold text-danger mb-0">
+                  {loading ? <div className="spinner-border spinner-border-sm" role="status"></div> : stats.evaluacionesPendientes}
+                </h4>
+                <small className="text-muted">Evaluaciones Pendientes</small>
+              </div>
+            </div>
+          </div>
+          <div className="col-md-3">
+            <div className="card text-center shadow-sm border-0" style={{ backgroundColor: '#e8f5e8', borderRadius: '15px' }}>
+              <div className="card-body">
+                <i className="bi bi-clipboard-check text-success mb-2" style={{ fontSize: '1.5rem' }}></i>
+                <h4 className="fw-bold text-success mb-0">
+                  {loading ? <div className="spinner-border spinner-border-sm" role="status"></div> : stats.evaluacionesCompletadas}
+                </h4>
+                <small className="text-muted">Evaluaciones Completadas</small>
               </div>
             </div>
           </div>

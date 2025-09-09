@@ -28,6 +28,12 @@ import ProtectedRoute from './ProtectedRoute';
 import { AuthProvider, useAuth } from '../context/AuthContext';
 import { PerfilEditProvider } from '../context/PerfilEditContext';
 
+// Componentes de Evaluación
+import CentroEvaluacion from '../views/CentroEvaluacion';
+import CrearEvaluacion from '../views/CrearEvaluacionNuevo';
+import DetalleEvaluacion from '../views/DetalleEvaluacion';
+import EvaluacionesCandidato from '../views/EvaluacionesCandidato';
+
 // Componente interno para manejar rutas con loading
 function AppContent() {
   const { loading } = useAuth();
@@ -150,6 +156,34 @@ function AppContent() {
               <ConfiguracionEmpresa />
             </ProtectedRoute>
           } />
+          
+          {/* Rutas de Evaluaciones */}
+          <Route path="/centro-evaluacion" element={
+            <ProtectedRoute rol="empresa">
+              <CentroEvaluacion />
+            </ProtectedRoute>
+          } />
+          <Route path="/crear-evaluacion" element={
+            <ProtectedRoute rol="empresa">
+              <CrearEvaluacion />
+            </ProtectedRoute>
+          } />
+          <Route path="/evaluacion/:id" element={
+            <ProtectedRoute rol="empresa">
+              <DetalleEvaluacion />
+            </ProtectedRoute>
+          } />
+          <Route path="/evaluacion/:id/editar" element={
+            <ProtectedRoute rol="empresa">
+              <CrearEvaluacion />
+            </ProtectedRoute>
+          } />
+          <Route path="/evaluaciones/candidato/:candidatoId" element={
+            <ProtectedRoute rol="empresa">
+              <EvaluacionesCandidato />
+            </ProtectedRoute>
+          } />
+          
           <Route path="/admin" element={
             <ProtectedRoute rol="admin">
               <AdminDashboard />
