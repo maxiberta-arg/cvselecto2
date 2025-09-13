@@ -23,16 +23,10 @@ return new class extends Migration
             $table->id();
             
             // Relación con EmpresaCandidato (FK principal)
-            $table->foreignId('empresa_candidato_id')
-                  ->constrained('empresa_candidatos')
-                  ->onDelete('cascade')
-                  ->comment('Relación con el candidato en el pool empresarial');
+            $table->unsignedBigInteger('empresa_candidato_id');
             
             // Evaluador responsable
-            $table->foreignId('evaluador_id')
-                  ->constrained('users')
-                  ->onDelete('restrict')
-                  ->comment('Usuario que realiza la evaluación');
+            $table->unsignedBigInteger('evaluador_id');
             
             // Metadatos de la evaluación
             $table->string('nombre_evaluacion')
@@ -47,7 +41,7 @@ return new class extends Migration
                 'personalizada'
             ])->comment('Tipo de evaluación realizada');
             
-            // Sistema de criterios y puntuación
+            // Sistema de criterios y puntuación (JSON)
             $table->json('criterios_evaluacion')
                   ->comment('Criterios de evaluación con pesos y descripciones');
                   
@@ -103,6 +97,10 @@ return new class extends Migration
             $table->index(['evaluador_id', 'fecha_completada'], 'idx_evaluaciones_evaluador');
             $table->index(['tipo_evaluacion', 'puntuacion_total'], 'idx_evaluaciones_tipo_puntuacion');
             $table->index('fecha_completada', 'idx_evaluaciones_fecha_completada');
+            
+            // Foreign keys agregadas al final para compatibilidad SQLite
+            $table->foreign('empresa_candidato_id')->references('id')->on('empresa_candidatos')->onDelete('cascade');
+            $table->foreign('evaluador_id')->references('id')->on('users')->onDelete('restrict');
         });
         
         echo "✅ Tabla 'evaluaciones' creada exitosamente\n";

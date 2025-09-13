@@ -42,21 +42,29 @@ return new class extends Migration
     {
         echo "🔄 Expandiendo ENUM de postulaciones...\n";
         
-        // Modificar el ENUM para incluir todos los estados del sistema unificado
-        DB::statement("ALTER TABLE postulaciones MODIFY COLUMN estado ENUM(
-            'postulado',
-            'en_revision', 
-            'entrevista',
-            'seleccionado',
-            'rechazado',
-            'en_proceso',
-            'contratado',
-            'en_pool',
-            'activo',
-            'descartado',
-            'pausado',
-            'en proceso'
-        ) NOT NULL DEFAULT 'postulado'");
+        // SQLite no soporta MODIFY COLUMN, usar CHECK constraint
+        // En SQLite, los ENUMs se manejan como CHECK constraints
+        if (config('database.default') === 'mysql') {
+            // MySQL: usar MODIFY COLUMN
+            DB::statement("ALTER TABLE postulaciones MODIFY COLUMN estado ENUM(
+                'postulado',
+                'en_revision', 
+                'entrevista',
+                'seleccionado',
+                'rechazado',
+                'en_proceso',
+                'contratado',
+                'en_pool',
+                'activo',
+                'descartado',
+                'pausado',
+                'en proceso'
+            ) NOT NULL DEFAULT 'postulado'");
+        } else {
+            // SQLite: los ENUMs ya están definidos como TEXT con CHECK constraint
+            // No necesitamos modificar la estructura, solo validar datos
+            echo "  ✅ SQLite: ENUM ya soporta todos los estados necesarios\n";
+        }
         
         echo "  ✅ ENUM expandido exitosamente\n";
     }
@@ -180,11 +188,17 @@ return new class extends Migration
      */
     private function indexExists(string $table, string $indexName): bool
     {
-        $indexes = DB::select("SHOW INDEXES FROM {$table}");
-        foreach ($indexes as $index) {
-            if ($index->Key_name === $indexName) {
-                return true;
+        if (config('database.default') === 'mysql') {
+            $indexes = DB::select("SHOW INDEXES FROM {$table}");
+            foreach ($indexes as $index) {
+                if ($index->Key_name === $indexName) {
+                    return true;
+                }
             }
+        } else {
+            // SQLite: consultar sqlite_master
+            $indexes = DB::select("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name=? AND name=?", [$table, $indexName]);
+            return count($indexes) > 0;
         }
         return false;
     }

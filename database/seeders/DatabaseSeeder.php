@@ -13,8 +13,12 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Deshabilitar verificación de claves foráneas temporalmente
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        // Para SQLite, deshabilitar verificación de claves foráneas temporalmente
+        if (config('database.default') === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        } else {
+            DB::statement('PRAGMA foreign_keys=OFF;');
+        }
         
         $this->command->info('🌱 Iniciando seeders de CVSelecto...');
         
@@ -26,9 +30,11 @@ class DatabaseSeeder extends Seeder
             CandidatoSeeder::class,       // Candidatos adicionales
             BusquedaLaboralSeeder::class, // Búsquedas (depende de Empresas)
             PostulacionSeeder::class,     // Postulaciones (depende de Candidatos y Búsquedas)
+            EmpresaCandidatoSeeder::class, // Pool de candidatos (depende de Empresa y Candidatos)
             ExperienciaSeeder::class,     // Experiencias (depende de Candidatos)
             CapacitacionSeeder::class,    // Educación (depende de Candidatos)
             EntrevistaSeeder::class,      // Entrevistas (depende de Postulaciones)
+            EvaluacionSeeder::class,      // Evaluaciones (depende de EmpresaCandidatos) ⭐ NUEVO
         ]);
         
         // Rehabilitar verificación de claves foráneas
@@ -50,5 +56,12 @@ class DatabaseSeeder extends Seeder
         $this->command->line('   Email: candidato@test.com');
         $this->command->line('   Password: candidato123');
         $this->command->line('');
+        
+        // Reactivar verificación de claves foráneas
+        if (config('database.default') === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        } else {
+            DB::statement('PRAGMA foreign_keys=ON;');
+        }
     }
 }
