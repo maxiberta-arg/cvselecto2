@@ -82,12 +82,22 @@ class EvaluacionService {
   // Obtener candidatos disponibles para evaluación
   async obtenerCandidatos(filtros = {}) {
     try {
+      // Usar el endpoint del pool empresarial existente en backend
       const params = new URLSearchParams();
       if (filtros.busqueda) params.append('busqueda', filtros.busqueda);
       if (filtros.estado) params.append('estado', filtros.estado);
+      if (filtros.search) params.append('search', filtros.search);
+      if (filtros.per_page) params.append('per_page', filtros.per_page);
 
-      const response = await api.get(`/candidatos-empresa?${params.toString()}`);
-      return response.data.data || response.data;
+      const url = `/pool-candidatos${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await api.get(url);
+
+      // El backend responde con { success, data, ... } (paginado)
+      // Normalizar a { success, data }
+      if (response.data && response.data.data !== undefined) {
+        return response.data.data;
+      }
+      return response.data;
     } catch (error) {
       console.error('Error al obtener candidatos:', error);
       throw error;
@@ -97,11 +107,35 @@ class EvaluacionService {
   // Obtener evaluaciones de un candidato específico
   async obtenerEvaluacionesCandidato(candidatoId, filtros = {}) {
     try {
+      // El backend expone evaluaciones por 'empresaCandidatoId' (tabla pivot).
+      // Si el caller pasa un `candidatoId` normal (no empresaCandidatoId), resolveremos
+      // automáticamente llamando a `/api/pool-candidatos/by-candidato/{candidatoId}`.
+      let empresaCandidatoId = candidatoId;
+
+      // Detectar si es probable un candidatoId (número pequeño) y resolver
+      // Si la vista ya pasó un objeto o cadena con prefijo 'ec_' se podría optimizar,
+      // pero asumimos numeric ids.
+      if (candidatoId && Number.isInteger(Number(candidatoId))) {
+        try {
+          const resp = await api.get(`/pool-candidatos/by-candidato/${candidatoId}`);
+          if (resp.data && resp.data.success && resp.data.data) {
+            empresaCandidatoId = resp.data.data.id;
+          }
+        } catch (err) {
+          // Si no se encuentra, re-lanzar el error para que la vista lo maneje
+          console.warn('No se pudo resolver empresaCandidatoId para candidatoId:', candidatoId, err?.response?.data || err.message);
+          throw err;
+        }
+      }
+
       const params = new URLSearchParams();
       if (filtros.estado) params.append('estado', filtros.estado);
       if (filtros.tipo) params.append('tipo', filtros.tipo);
 
-      const response = await api.get(`/candidatos/${candidatoId}/evaluaciones?${params.toString()}`);
+      const url = `/evaluaciones/candidato/${empresaCandidatoId}${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await api.get(url);
+
+      // Backend devuelve { success, data: { candidato, evaluaciones, ... } }
       return response.data.data || response.data;
     } catch (error) {
       console.error('Error al obtener evaluaciones del candidato:', error);

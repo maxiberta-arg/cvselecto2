@@ -740,6 +740,44 @@ class EmpresaPoolController extends Controller
     }
 
     /**
+     * Obtener empresaCandidato por candidato_id para la empresa autenticada
+     *
+     * Esto facilita resolver el `empresaCandidatoId` desde el frontend cuando
+     * sólo se dispone del `candidatoId`.
+     */
+    public function byCandidato($candidatoId)
+    {
+        try {
+            $empresa = $this->obtenerEmpresaAutenticada();
+
+            $empresaCandidato = \App\Models\EmpresaCandidato::where('empresa_id', $empresa->id)
+                ->where('candidato_id', $candidatoId)
+                ->with(['candidato.user'])
+                ->first();
+
+            if (! $empresaCandidato) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Candidato no encontrado en el pool de la empresa'
+                ], 404);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $empresaCandidato
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error en EmpresaPoolController@byCandidato: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener candidato en pool',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Obtener estadísticas extendidas incluyendo evaluaciones
      */
     public function estadisticasExtendidas()
@@ -785,20 +823,6 @@ class EmpresaPoolController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener estadísticas extendidas',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-            
-            return response()->json([
-                'success' => true,
-                'data' => $tags
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Error en EmpresaPoolController@getTags: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener tags',
                 'error' => $e->getMessage()
             ], 500);
         }

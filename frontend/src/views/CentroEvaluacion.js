@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import evaluacionService from '../services/evaluacionService';
 import SectionTitle from '../components/SectionTitle';
@@ -31,11 +31,51 @@ const CentroEvaluacion = () => {
 
   const [vistaActual, setVistaActual] = useState('evaluaciones'); // 'evaluaciones', 'candidatos', 'estadisticas'
 
-  useEffect(() => {
-    cargarDatos();
-  }, [filtros, paginacion.current_page]);
+  // Memoizar cargarDatos para evitar recreación en cada render
+  const cargarEvaluaciones = useCallback(async () => {
+    try {
+      const response = await evaluacionService.obtenerEvaluaciones({
+        ...filtros,
+        page: paginacion.current_page,
+        per_page: paginacion.per_page
+      });
+      
+      if (response && response.data) {
+        setEvaluaciones(response.data.data || []);
+        setPaginacion(prev => ({
+          ...prev,
+          total: response.data.total,
+          last_page: response.data.last_page
+        }));
+      }
+    } catch (err) {
+      setError(err.message || 'Error al cargar evaluaciones');
+    }
+  }, [filtros, paginacion.current_page, paginacion.per_page]);
 
-  const cargarDatos = async () => {
+  const cargarCandidatosParaEvaluar = useCallback(async () => {
+    try {
+      const response = await evaluacionService.candidatosParaEvaluacion();
+      if (response && response.data) {
+        setCandidatosParaEvaluar(response.data);
+      }
+    } catch (err) {
+      console.error('Error al cargar candidatos para evaluar:', err);
+    }
+  }, []);
+
+  const cargarEstadisticas = useCallback(async () => {
+    try {
+      const response = await evaluacionService.obtenerEstadisticas();
+      if (response) {
+        setEstadisticas(response);
+      }
+    } catch (err) {
+      console.error('Error al cargar estadísticas:', err);
+    }
+  }, []);
+
+  const cargarDatos = useCallback(async () => {
     setLoading(true);
     try {
       await Promise.all([
@@ -48,56 +88,11 @@ const CentroEvaluacion = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [cargarEvaluaciones, cargarCandidatosParaEvaluar, cargarEstadisticas]);
 
-  const cargarEvaluaciones = async () => {
-    try {
-      const response = await evaluacionService.obtenerEvaluaciones({
-        ...filtros,
-        page: paginacion.current_page,
-        per_page: paginacion.per_page
-      });
-      
-      if (response.success) {
-        setEvaluaciones(response.data);
-        setPaginacion({
-          current_page: response.meta.current_page,
-          per_page: response.meta.per_page,
-          total: response.meta.total,
-          last_page: response.meta.last_page
-        });
-      }
-    } catch (err) {
-      console.error('Error al cargar evaluaciones:', err);
-    }
-  };
-
-  const cargarCandidatosParaEvaluar = async () => {
-    try {
-      const response = await evaluacionService.obtenerCandidatosParaEvaluacion({
-        estado: 'aceptado',
-        per_page: 10
-      });
-      
-      if (response.success) {
-        setCandidatosParaEvaluar(response.data || []);
-      }
-    } catch (err) {
-      console.error('Error al cargar candidatos para evaluar:', err);
-    }
-  };
-
-  const cargarEstadisticas = async () => {
-    try {
-      const response = await evaluacionService.obtenerEstadisticas();
-      
-      if (response.success) {
-        setEstadisticas(response.data);
-      }
-    } catch (err) {
-      console.error('Error al cargar estadísticas:', err);
-    }
-  };
+  useEffect(() => {
+    cargarDatos();
+  }, [cargarDatos]);
 
   const handleFiltroChange = (campo, valor) => {
     setFiltros(prev => ({

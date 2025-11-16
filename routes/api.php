@@ -61,6 +61,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // Pool de candidatos empresarial
         Route::prefix('pool-candidatos')->name('pool.')->group(function () {
             Route::get('/', [App\Http\Controllers\Api\EmpresaPoolController::class, 'index'])->name('index');
+            Route::get('/by-candidato/{candidatoId}', [App\Http\Controllers\Api\EmpresaPoolController::class, 'byCandidato'])->name('by-candidato');
             Route::get('/estadisticas', [App\Http\Controllers\Api\EmpresaPoolController::class, 'estadisticas'])->name('estadisticas');
             Route::get('/estadisticas-extendidas', [App\Http\Controllers\Api\EmpresaPoolController::class, 'estadisticasExtendidas'])->name('estadisticas-extendidas');
             Route::get('/tags', [App\Http\Controllers\Api\EmpresaPoolController::class, 'getTags'])->name('tags');
