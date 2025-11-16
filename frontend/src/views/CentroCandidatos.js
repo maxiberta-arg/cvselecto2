@@ -30,6 +30,9 @@ export default function CentroCandidatos() {
     busqueda: []
   });
 
+  // Cargar datos iniciales cuando cambia el usuario; la función
+  // `cargarDatosIniciales` está definida en el mismo componente.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (user?.id) {
       cargarDatosIniciales();

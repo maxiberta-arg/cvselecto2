@@ -78,6 +78,9 @@ export default function PoolCandidatos() {
   const [nuevoTag, setNuevoTag] = useState('');
 
   // Cargar datos al montar el componente
+  // Llamadas iniciales que pueden invocar funciones definidas en el componente.
+  // Se mantiene la intención de ejecutar estas llamadas al montar/cambiar `user`.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (user && user.rol === 'empresa') {
       cargarPoolCandidatos(false);
@@ -87,6 +90,9 @@ export default function PoolCandidatos() {
   }, [user]);
 
   // Recargar cuando cambien los filtros (excepto page)
+  // Debounce para filtros: intencionalmente no incluimos `cargarPoolCandidatos`
+  // en las dependencias para evitar re-ejecuciones innecesarias.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (user && user.rol === 'empresa') {
@@ -109,6 +115,9 @@ export default function PoolCandidatos() {
   }, [filtros.estado_interno, filtros.origen, filtros.puntuacion_min, filtros.puntuacion_max, filtros.search]);
 
   // Cargar cuando cambie la página (sin delay)
+  // Cambio de página: la función `cargarPoolCandidatos` se llama deliberadamente
+  // sin declararla en las dependencias del hook.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (user && user.rol === 'empresa' && filtros.page > 1) {
       cargarPoolCandidatos(false);

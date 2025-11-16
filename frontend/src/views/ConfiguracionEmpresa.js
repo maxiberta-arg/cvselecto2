@@ -41,6 +41,10 @@ export default function ConfiguracionEmpresa() {
 
   const [originalData, setOriginalData] = useState({});
 
+  // Cargar configuración al cambiar el usuario. `cargarConfiguracion` es una
+  // función interna; se omite su inclusión en las dependencias de forma
+  // intencional para mantener la semántica actual.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     cargarConfiguracion();
   }, [user?.id]);
