@@ -1,3 +1,16 @@
+README - documentation/archive
+
+Esta carpeta contiene los archivos de documentación históricos y versiones previas que fueron archivadas
+durante la auditoría y consolidación del proyecto CVSelecto.
+
+Propósito:
+- Preservar historial y versiones previas sin entorpecer la documentación activa.
+- Mantener consistencia con las copias de seguridad de código (archivos `.bak`).
+
+Contenido:
+- Archivos movidos desde la raíz y otras carpetas (varios .md con reportes y planes anteriores).
+
+Si necesitas restaurar un archivo, cópialo desde esta carpeta a la raíz o a `documentation/`.
 # 📦 ARCHIVO DE DOCUMENTACIÓN - CVSelecto
 ## Historial y Referencias (Archivado)
 

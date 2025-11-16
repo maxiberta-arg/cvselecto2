@@ -1,0 +1,20 @@
+DECISIONES DE UNIFICACIÓN DE COMPONENTES - CVSelecto
+
+Fecha: 16-11-2025
+
+1) `CentroCandidatos`
+   - Versión elegida: `CentroCandidatos_NEW.js` (modular, tabs y manejo de estados/acciones).
+   - Acción: Contenido copiado a `frontend/src/views/CentroCandidatos.js` (archivo principal).
+   - Respaldos: `frontend/archive/CentroCandidatos_NEW.js.bak`, `frontend/archive/CentroCandidatosFixed.js.bak`, `frontend/archive/CentroCandidatosSimple.js.bak`.
+
+2) `ConfiguracionEmpresa`
+   - Versión elegida: `ConfiguracionEmpresa.js` (completa, validaciones, upload de logo mejorado).
+   - Acción: Mantener `frontend/src/views/ConfiguracionEmpresa.js` como principal.
+   - Respaldos: `frontend/archive/ConfiguracionEmpresaSimple.js.bak`.
+   - Estado: UNIFICADO (variante simplificada movida a `frontend/archive/`).
+
+Notas:
+- Se movieron variantes a `frontend/archive/` y se mantuvieron respaldos con sufijo `.bak`.
+- Objetivo: eliminar ambigüedad en producción y facilitar mantenimiento.
+
+Responsable: Senior Professional (ejecución automatizada por el agente)

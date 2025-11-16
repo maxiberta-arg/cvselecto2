@@ -1,0 +1,17 @@
+PLAN DE DOCUMENTACIÓN - CVSelecto
+
+Estado (16-11-2025):
+- Archivos activos en la raíz del proyecto (10 .md) se mantienen como fuente oficial.
+- Archivos históricos y duplicados fueron previamente movidos a `documentation/archive/`.
+
+Acción tomada:
+- Mantener 10 archivos activos en raíz para visibilidad rápida.
+- Consolidar en `DOCUMENTACION_CVSELECTO_FINAL.md` (tarea posterior).
+- `documentation/archive/` contiene los respaldos históricos; no se eliminó nada permanentemente.
+
+Próximos pasos:
+1) Generar `DOCUMENTACION_CVSELECTO_FINAL.md` que contenga la versión maestra.
+2) Actualizar `README.md` si cambia la ubicación de documentación.
+3) Revisar y anotar en `DOCUMENTACION_PLAN.txt` las decisiones de fusión.
+
+Responsable: Senior Professional (ejecución automatizada por el agente)

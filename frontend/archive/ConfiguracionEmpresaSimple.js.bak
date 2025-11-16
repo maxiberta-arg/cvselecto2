@@ -1,0 +1,9 @@
+// Respaldo: ConfiguracionEmpresaSimple.js (movido a archive)
+import React from 'react';
+// Contenido respaldado para referencia. Si es necesario restaurar, copiar de aquí.
+
+// Nota: este archivo es una versión simplificada del componente de configuración de empresa.
+
+export default function ConfiguracionEmpresaSimpleBackup() {
+  return null;
+}
