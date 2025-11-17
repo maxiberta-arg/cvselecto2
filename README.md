@@ -1,15 +1,93 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🚀 CVSelecto 2.0 - Production Ready
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**Estado:** ✅ LISTO PARA PRODUCCIÓN  
+**Versión:** 2.0 (17/11/2025)  
+**Stack:** Laravel 11 + React + MySQL
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📦 Tecnologías
+
+- **Backend:** Laravel 11, PHP 8.2, Sanctum Auth
+- **Frontend:** React (CRA), webpack
+- **Database:** MySQL/MariaDB (25 migraciones)
+- **Testing:** PHPUnit (2/2 tests passing)
+- **APIs:** RESTful (63 endpoints)
+
+---
+
+## 🚀 Deploy Rápido
+
+### Opción 1: Automático (PowerShell)
+
+```powershell
+.\scripts\deploy_production.ps1 `
+  -ServerHost "usuario@servidor.com" `
+  -ProjectPath "/var/www/cvselecto"
+```
+
+### Opción 2: Manual (Bash)
+
+```bash
+bash scripts/deploy-production.sh "https://tu-dominio.com"
+```
+
+### Opción 3: Documentación Paso-a-Paso
+
+Ver: **DEPLOY_CHECKLIST.md**
+
+---
+
+## 📋 Documentación
+
+| Documento | Propósito |
+|-----------|----------|
+| **DEPLOY_RAPIDO.md** | Quick start (3 min read) |
+| **DEPLOY_CHECKLIST.md** | Guía completa 8 pasos |
+| **POST_DEPLOY_VALIDATION.md** | Tests post-deploy |
+| **CREDENCIALES_DEPLOY_REQUERIDAS.md** | Form credenciales |
+| **RESUMEN_EJECUTIVO_DEPLOY_FINAL.md** | Status general |
+
+---
+
+## ✅ Pre-Deploy Checklist
+
+- [x] Backend: 25 migrations, 63 APIs, tests passing
+- [x] Frontend: Build compilado, ESLint fixed
+- [x] Documentation: Guías deploy completadas
+- [x] Scripts: Automáticos + manual
+- [ ] Credenciales servidor: **⏳ REQUERIDAS**
+
+---
+
+## 📞 Requerimientos Servidor
+
+```
+SSH:     usuario@servidor.com:22
+DB Host: db.ejemplo.com
+DB User: cvselecto_user
+DB Pass: ***
+Path:    /var/www/cvselecto
+Domain:  https://cvselecto.ejemplo.com
+```
+
+👉 **Proporciona en:** CREDENCIALES_DEPLOY_REQUERIDAS.md
+
+---
+
+## 🔧 Desarrollo Local
+
+```bash
+# Backend
+composer install
+php artisan migrate
+php artisan serve
+
+# Frontend
+cd frontend
+npm ci
+npm start
+```
 
 - [Simple, fast routing engine](https://laravel.com/docs/routing).
 - [Powerful dependency injection container](https://laravel.com/docs/container).
